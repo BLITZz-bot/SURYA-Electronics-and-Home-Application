@@ -22,10 +22,16 @@ export const authOptions: NextAuthOptions = {
     async signIn({ user }) {
       const adminEmails = process.env.ADMIN_EMAILS?.split(",").map((email) => email.trim().toLowerCase()) ?? [];
       if (user.email && adminEmails.includes(user.email.toLowerCase())) {
-        await prisma.user.update({
-          where: { id: user.id },
-          data: { role: "admin" },
-        });
+        try {
+          // Note: In some adapters, the user might not be in the DB yet during signIn.
+          // We use a safe update here.
+          await prisma.user.update({
+            where: { email: user.email },
+            data: { role: "admin" },
+          });
+        } catch (error) {
+          console.error("Failed to set admin role during sign-in:", error);
+        }
       }
       return true;
     },

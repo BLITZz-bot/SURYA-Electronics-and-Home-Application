@@ -2,12 +2,17 @@ import Link from "next/link";
 import { prisma } from "../lib/prisma";
 
 export default async function HomePage() {
-  const products = await prisma.product.findMany({
-    orderBy: {
-      createdAt: "desc",
-    },
-    take: 6,
-  });
+  let products = [];
+  try {
+    products = await prisma.product.findMany({
+      orderBy: {
+        createdAt: "desc",
+      },
+      take: 6,
+    });
+  } catch (error) {
+    console.error("Home Page Error fetching products:", error);
+  }
 
   return (
     <main className="min-h-screen bg-slate-50 px-6 py-10 text-slate-900">
@@ -34,32 +39,38 @@ export default async function HomePage() {
               View all products →
             </Link>
           </div>
-          <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
-            {products.map((product) => (
-              <Link
-                key={product.id}
-                href={`/products/${product.id}`}
-                className="group rounded-3xl border border-slate-200 bg-white transition hover:-translate-y-1 hover:shadow-xl"
-              >
-                <div className="h-56 overflow-hidden rounded-t-3xl bg-slate-100">
-                  <img
-                    src={product.imageUrl}
-                    alt={product.name}
-                    className="h-full w-full object-cover object-center transition duration-300 group-hover:scale-105"
-                  />
-                </div>
-                <div className="p-6">
-                  <p className="text-xs uppercase tracking-[0.3em] text-slate-400">{product.category}</p>
-                  <h2 className="mt-3 text-xl font-semibold text-slate-900">{product.name}</h2>
-                  <p className="mt-3 text-sm text-slate-600 line-clamp-2">{product.description}</p>
-                  <div className="mt-6 flex items-center justify-between text-slate-900">
-                    <p className="text-lg font-semibold">₹{Number(product.price).toFixed(0)}</p>
-                    <p className="text-sm text-slate-500">Stock: {product.stock}</p>
+          {products.length === 0 ? (
+            <div className="text-center py-20 bg-white rounded-3xl border border-dashed border-slate-300">
+              <p className="text-slate-500">No products found. Please ensure the database is seeded.</p>
+            </div>
+          ) : (
+            <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
+              {products.map((product) => (
+                <Link
+                  key={product.id}
+                  href={`/products/${product.id}`}
+                  className="group rounded-3xl border border-slate-200 bg-white transition hover:-translate-y-1 hover:shadow-xl"
+                >
+                  <div className="h-56 overflow-hidden rounded-t-3xl bg-slate-100">
+                    <img
+                      src={product.imageUrl}
+                      alt={product.name}
+                      className="h-full w-full object-cover object-center transition duration-300 group-hover:scale-105"
+                    />
                   </div>
-                </div>
-              </Link>
-            ))}
-          </div>
+                  <div className="p-6">
+                    <p className="text-xs uppercase tracking-[0.3em] text-slate-400">{product.category}</p>
+                    <h2 className="mt-3 text-xl font-semibold text-slate-900">{product.name}</h2>
+                    <p className="mt-3 text-sm text-slate-600 line-clamp-2">{product.description}</p>
+                    <div className="mt-6 flex items-center justify-between text-slate-900">
+                      <p className="text-lg font-semibold">₹{Number(product.price).toFixed(0)}</p>
+                      <p className="text-sm text-slate-500">Stock: {product.stock}</p>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
         </section>
       </div>
     </main>
