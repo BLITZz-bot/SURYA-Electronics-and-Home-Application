@@ -1,46 +1,66 @@
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "../lib/auth";
-import AuthButton from "../components/auth-button";
 import Link from "next/link";
+import { prisma } from "../lib/prisma";
 
 export default async function HomePage() {
-  const session = await getServerSession(authOptions);
+  const products = await prisma.product.findMany({
+    orderBy: {
+      createdAt: "desc",
+    },
+    take: 6,
+  });
 
   return (
     <main className="min-h-screen bg-slate-50 px-6 py-10 text-slate-900">
-      <div className="mx-auto flex max-w-5xl flex-col gap-10 rounded-3xl bg-white p-10 shadow-xl shadow-slate-200">
-        <div>
-          <p className="text-sm uppercase tracking-[0.3em] text-sky-700">SURYA Electronics</p>
-          <h1 className="mt-4 text-5xl font-semibold tracking-tight">Login with Google for fast access.</h1>
-          <p className="mt-4 max-w-2xl text-lg leading-8 text-slate-600">
-            Use your Google account to sign in and start shopping electronics, home appliances, and more.
-          </p>
-        </div>
-
-        <div className="flex flex-col gap-6 rounded-3xl border border-slate-200 bg-slate-50 p-8">
-          <div className="flex items-center justify-between gap-4">
-            <div>
-              <h2 className="text-2xl font-semibold">Authentication</h2>
-              <p className="mt-1 text-sm text-slate-500">
-                Google single sign-on keeps registration simple and secure.
-              </p>
-            </div>
-            <AuthButton />
-          </div>
-
-          {session ? (
-            <div className="rounded-3xl border border-slate-200 bg-white p-6">
-              <p className="text-slate-700">Welcome back, {session.user?.name ?? session.user?.email}.</p>
-              <Link href="/dashboard" className="mt-4 inline-flex rounded-full bg-sky-600 px-5 py-3 text-white hover:bg-sky-700">
-                Go to Dashboard
+      <div className="mx-auto max-w-6xl space-y-12">
+        <section className="rounded-3xl border border-slate-200 bg-white p-10 shadow-xl shadow-slate-100">
+          <div className="max-w-3xl">
+            <p className="text-sm uppercase tracking-[0.3em] text-sky-700 font-semibold">Welcome to SURYA Electronics</p>
+            <h1 className="mt-4 text-5xl font-semibold tracking-tight">Your one-stop shop for modern home appliances.</h1>
+            <p className="mt-6 text-lg text-slate-600 leading-8">
+              Experience the best in electronics. Browse our curated collection of high-quality products, from the latest smartphones to essential home appliances.
+            </p>
+            <div className="mt-8 flex gap-4">
+              <Link href="/products" className="rounded-full bg-slate-900 px-8 py-4 text-white hover:bg-slate-700 transition font-medium">
+                Browse Products
               </Link>
             </div>
-          ) : (
-            <div className="rounded-3xl border border-dashed border-slate-300 bg-white p-6 text-slate-600">
-              <p>Click the button to authenticate through Google and see the customer dashboard.</p>
-            </div>
-          )}
-        </div>
+          </div>
+        </section>
+
+        <section className="space-y-8">
+          <div className="flex items-center justify-between">
+            <h2 className="text-3xl font-semibold">Latest Arrivals</h2>
+            <Link href="/products" className="text-sky-700 hover:underline font-medium">
+              View all products →
+            </Link>
+          </div>
+          <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
+            {products.map((product) => (
+              <Link
+                key={product.id}
+                href={`/products/${product.id}`}
+                className="group rounded-3xl border border-slate-200 bg-white transition hover:-translate-y-1 hover:shadow-xl"
+              >
+                <div className="h-56 overflow-hidden rounded-t-3xl bg-slate-100">
+                  <img
+                    src={product.imageUrl}
+                    alt={product.name}
+                    className="h-full w-full object-cover object-center transition duration-300 group-hover:scale-105"
+                  />
+                </div>
+                <div className="p-6">
+                  <p className="text-xs uppercase tracking-[0.3em] text-slate-400">{product.category}</p>
+                  <h2 className="mt-3 text-xl font-semibold text-slate-900">{product.name}</h2>
+                  <p className="mt-3 text-sm text-slate-600 line-clamp-2">{product.description}</p>
+                  <div className="mt-6 flex items-center justify-between text-slate-900">
+                    <p className="text-lg font-semibold">₹{Number(product.price).toFixed(0)}</p>
+                    <p className="text-sm text-slate-500">Stock: {product.stock}</p>
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </section>
       </div>
     </main>
   );
