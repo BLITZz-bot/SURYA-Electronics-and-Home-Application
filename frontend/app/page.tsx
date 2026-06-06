@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { prisma } from "../lib/prisma";
+import { Product } from "@prisma/client";
 
 export default async function HomePage() {
-  let products = [];
+  let products: Product[] = [];
   try {
     products = await prisma.product.findMany({
       orderBy: {
