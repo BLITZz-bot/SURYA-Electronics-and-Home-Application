@@ -2,6 +2,8 @@ import Link from "next/link";
 import { prisma } from "../lib/prisma";
 import { Product } from "@prisma/client";
 
+export const dynamic = "force-dynamic";
+
 export default async function HomePage() {
   let products: Product[] = [];
   try {

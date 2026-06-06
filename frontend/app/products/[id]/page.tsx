@@ -2,6 +2,8 @@ import { notFound } from "next/navigation";
 import { prisma } from "../../../lib/prisma";
 import AddToCartForm from "../../../components/add-to-cart-form";
 
+export const dynamic = "force-dynamic";
+
 interface ProductPageProps {
   params: {
     id: string;
@@ -9,11 +11,16 @@ interface ProductPageProps {
 }
 
 export default async function ProductPage({ params }: ProductPageProps) {
-  const product = await prisma.product.findUnique({
-    where: {
-      id: params.id,
-    },
-  });
+  let product = null;
+  try {
+    product = await prisma.product.findUnique({
+      where: {
+        id: params.id,
+      },
+    });
+  } catch (error) {
+    console.error("Product Page Error:", error);
+  }
 
   if (!product) {
     notFound();
@@ -42,7 +49,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
                 </div>
                 <div className="rounded-3xl bg-slate-50 p-4 text-sm text-slate-600">
                   Price
-                  <p className="mt-2 font-medium text-slate-900">₹{product.price.toFixed(0)}</p>
+                  <p className="mt-2 font-medium text-slate-900">₹{Number(product.price).toFixed(0)}</p>
                 </div>
                 <div className="rounded-3xl bg-slate-50 p-4 text-sm text-slate-600">
                   Stock
