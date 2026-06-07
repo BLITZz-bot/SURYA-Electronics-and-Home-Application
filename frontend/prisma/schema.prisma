@@ -43,6 +43,8 @@ model User {
   emailVerified DateTime?
   image         String?
   role          String     @default("customer")
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
   accounts      Account[]
   addresses     Address[]
   cartItems     CartItem[]
