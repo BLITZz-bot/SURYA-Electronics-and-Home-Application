@@ -95,6 +95,5 @@ export const authOptions: NextAuthOptions = {
       }
     }
   },
-  skipCSRFCheck: true,
   debug: true,
 };
