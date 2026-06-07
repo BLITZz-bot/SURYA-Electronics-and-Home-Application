@@ -77,7 +77,24 @@ export const authOptions: NextAuthOptions = {
         path: '/',
         secure: true
       }
+    },
+    callbackUrl: {
+      name: `next-auth.callback-url`,
+      options: {
+        sameSite: 'lax',
+        path: '/',
+        secure: true
+      }
+    },
+    csrfToken: {
+      name: `next-auth.csrf-token`,
+      options: {
+        sameSite: 'lax',
+        path: '/',
+        secure: true
+      }
     }
   },
+  skipCSRFCheck: true,
   debug: true,
 };
