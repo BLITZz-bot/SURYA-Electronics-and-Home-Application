@@ -32,35 +32,21 @@ export const authOptions: NextAuthOptions = {
           console.log("User promoted to admin in DB:", user.email);
         } catch (error) {
           console.error("Failed to set admin role in DB during sign-in:", error);
-          // We don't return false here because we still want them to be able to sign in
         }
       }
       return true;
     },
-    async jwt({ token, user }) {
-      // Check admin emails directly in JWT for immediate recognition
-      const adminEmails = process.env.ADMIN_EMAILS?.split(",").map((email) => email.trim().toLowerCase()) ?? [];
-      
-      if (user) {
-        token.id = user.id;
-        token.email = user.email;
-        const isEmailAdmin = user.email && adminEmails.includes(user.email.toLowerCase());
-        token.role = isEmailAdmin ? "admin" : (user.role ?? "customer");
-        console.log("JWT token created for:", user.email, "Role:", token.role);
-      } else if (token.email) {
-        // Refresh role on every token check if needed
-        const isEmailAdmin = typeof token.email === 'string' && adminEmails.includes(token.email.toLowerCase());
-        if (isEmailAdmin) {
-          token.role = "admin";
+    async session({ session }) {
+      if (session.user && session.user.email) {
+        // Fetch fresh user data from database
+        const dbUser = await prisma.user.findUnique({
+          where: { email: session.user.email },
+        });
+        if (dbUser) {
+          session.user.id = dbUser.id;
+          session.user.role = dbUser.role;
+          console.log("Session loaded for:", session.user.email, "Role:", dbUser.role);
         }
-      }
-      return token;
-    },
-    async session({ session, token }) {
-      if (session.user) {
-        session.user.id = token.id as string;
-        session.user.role = (token.role as string) ?? "customer";
-        console.log("Session created for:", session.user.email, "Role:", session.user.role);
       }
       return session;
     },
