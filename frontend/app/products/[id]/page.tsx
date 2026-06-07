@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
-import { prisma } from "../../../lib/prisma";
 import AddToCartForm from "../../../components/add-to-cart-form";
+import { getApiUrl } from "../../../lib/api-utils";
 
 export const dynamic = "force-dynamic";
 
@@ -13,16 +13,12 @@ interface ProductPageProps {
 export default async function ProductPage({ params }: ProductPageProps) {
   let product = null;
   try {
-    product = await prisma.product.findUnique({
-      where: {
-        id: params.id,
-      },
-      include: {
-        category: { select: { name: true } }
-      }
-    });
+    const res = await fetch(getApiUrl(`/api/products/${params.id}`), { cache: 'no-store' });
+    if (res.ok) {
+      product = await res.json();
+    }
   } catch (error) {
-    console.error("Product Page Error:", error);
+    console.error("Product Detail Page Error:", error);
   }
 
   if (!product) {
@@ -52,7 +48,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
                 </div>
                 <div className="rounded-3xl bg-slate-50 p-4 text-sm text-slate-600">
                   Price
-                  <p className="mt-2 font-medium text-slate-900">₹{Number(product.price).toFixed(0)}</p>
+                  <p className="mt-2 font-medium text-slate-900">₹{Number(product.price).toLocaleString()}</p>
                 </div>
                 <div className="rounded-3xl bg-slate-50 p-4 text-sm text-slate-600">
                   Stock
