@@ -34,15 +34,18 @@ export const getProfile = async (req: Request, res: Response) => {
         },
       });
       console.log(`Created new user: ${email} with role: ${user.role}`);
-    } else {
-      // Force promote if email is in the list (Even if they existed before)
-      if (shouldBeAdmin && user.role !== 'admin') {
-        user = await prisma.user.update({
-          where: { id: user.id },
-          data: { role: 'admin' },
-        });
-        console.log(`Promoted user to admin: ${email}`);
-      }
+    // Force promote if email is in the list (Even if they existed before)
+    if (shouldBeAdmin && user.role !== 'admin') {
+      user = await prisma.user.update({
+        where: { id: user.id },
+        data: { role: 'admin' },
+      });
+      console.log(`Promoted user to admin: ${email}`);
+    }
+
+    // FINAL FAILSAFE: If the logic above somehow missed it, force the role in the response
+    if (shouldBeAdmin) {
+      user.role = 'admin';
     }
 
     res.json(user);
