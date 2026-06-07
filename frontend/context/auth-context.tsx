@@ -48,8 +48,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           
           if (response.ok) {
             const profile = await response.json();
+            console.log("Profile received from backend:", profile);
             setDbUser(profile);
             setIsAdmin(profile.role === 'admin');
+          } else {
+            console.error("Profile fetch failed with status:", response.status);
+            const errorText = await response.text();
+            console.error("Error details:", errorText);
           }
         } catch (err) {
           console.error("Auth initialization error:", err);
