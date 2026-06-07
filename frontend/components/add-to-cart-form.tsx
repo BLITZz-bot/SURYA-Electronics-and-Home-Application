@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { signIn, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { useAuth } from "../context/auth-context";
+import { getApiUrl } from "../lib/api-utils";
 
 interface AddToCartFormProps {
   productId: string;
@@ -10,15 +11,15 @@ interface AddToCartFormProps {
 }
 
 export default function AddToCartForm({ productId, availableStock }: AddToCartFormProps) {
-  const { data: session } = useSession();
+  const { user, token } = useAuth();
   const router = useRouter();
   const [quantity, setQuantity] = useState(1);
   const [message, setMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   async function handleAddToCart() {
-    if (!session) {
-      signIn("google");
+    if (!user || !token) {
+      router.push("/auth/signin");
       return;
     }
 
@@ -26,21 +27,18 @@ export default function AddToCartForm({ productId, availableStock }: AddToCartFo
     setMessage(null);
 
     try {
-      const response = await fetch("/api/cart", {
+      const response = await fetch(getApiUrl("/api/cart"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
         },
         body: JSON.stringify({ productId, quantity }),
       });
 
       const result = await response.json();
       if (!response.ok) {
-        if (response.status === 401) {
-          signIn("google");
-        } else {
-          setMessage(result.error ?? "Could not add item to cart.");
-        }
+        setMessage(result.error ?? "Could not add item to cart.");
       } else {
         setMessage("Product added to cart successfully.");
         router.push("/cart");
@@ -76,7 +74,7 @@ export default function AddToCartForm({ productId, availableStock }: AddToCartFo
           disabled={loading || quantity < 1 || quantity > availableStock}
           className="w-full rounded-full bg-slate-900 px-6 py-4 text-white font-semibold transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:bg-slate-400"
         >
-          {loading ? "Processing..." : session ? "Add to cart" : "Sign in to Buy"}
+          {loading ? "Processing..." : user ? "Add to cart" : "Sign in to Buy"}
         </button>
       </div>
 
