@@ -22,10 +22,10 @@
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
-    "firebase-admin": "11.11.1"
+    "firebase-admin": "11.11.1",
+    "prisma": "5.10.0"
   },
   "devDependencies": {
-    "prisma": "5.10.0",
     "ts-node": "^10.9.2",
     "typescript": "^6.0.3"
   }
