@@ -404,8 +404,3 @@ export default function AccountPage() {
     </main>
   );
 }
-iv>
-      </div>
-    </main>
-  );
-}
