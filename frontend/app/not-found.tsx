@@ -17,7 +17,7 @@ export default function NotFound() {
         <div className="space-y-2">
           <h1 className="text-4xl font-black text-gray-900 tracking-tight uppercase italic">Page Not Found</h1>
           <p className="text-gray-400 font-medium max-w-sm mx-auto">
-            We searched every shelf, but the page you're looking for has been moved or disconnected.
+            We searched every shelf, but the page you&apos;re looking for has been moved or disconnected.
           </p>
         </div>
 

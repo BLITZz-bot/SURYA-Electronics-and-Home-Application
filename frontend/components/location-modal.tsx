@@ -18,13 +18,7 @@ export default function LocationModal({ isOpen, onClose, onAddressSelect }: Loca
   const [loading, setLoading] = useState(false);
   const [locating, setLocating] = useState(false);
 
-  useEffect(() => {
-    if (isOpen && token) {
-      fetchAddresses();
-    }
-  }, [isOpen, token]);
-
-  async function fetchAddresses() {
+  const fetchAddresses = useCallback(async () => {
     setLoading(true);
     try {
       const res = await fetch(getApiUrl("/api/addresses"), {
@@ -39,7 +33,13 @@ export default function LocationModal({ isOpen, onClose, onAddressSelect }: Loca
     } finally {
       setLoading(false);
     }
-  }
+  }, [token]);
+
+  useEffect(() => {
+    if (isOpen && token) {
+      fetchAddresses();
+    }
+  }, [isOpen, token, fetchAddresses]);
 
   const handleUseCurrentLocation = () => {
     setLocating(true);
