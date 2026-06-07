@@ -8,6 +8,7 @@ export default function AdminUsersPage() {
   const { token, isAdmin } = useAuth();
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
 
   useEffect(() => {
     if (token && isAdmin) {
@@ -31,6 +32,34 @@ export default function AdminUsersPage() {
     }
   };
 
+  const handleRoleChange = async (userId: string, newRole: string) => {
+    if (!confirm(`Are you sure you want to change this user's role to ${newRole}?`)) return;
+    
+    setUpdatingId(userId);
+    try {
+      const res = await fetch(getApiUrl(`/api/users/${userId}`), {
+        method: 'PATCH',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}` 
+        },
+        body: JSON.stringify({ role: newRole })
+      });
+
+      if (res.ok) {
+        // Update local state
+        setUsers(users.map(u => u.id === userId ? { ...u, role: newRole } : u));
+      } else {
+        const data = await res.json();
+        alert(data.error || 'Failed to update user role');
+      }
+    } catch (err) {
+      alert('An error occurred while updating the role');
+    } finally {
+      setUpdatingId(null);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -45,7 +74,7 @@ export default function AdminUsersPage() {
     <div className="p-8 space-y-8">
       <div>
         <h1 className="text-3xl font-bold text-slate-900">Customers</h1>
-        <p className="text-slate-600 mt-1">View and manage registered customers</p>
+        <p className="text-slate-600 mt-1">View and manage registered customers and team members</p>
       </div>
 
       <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
@@ -56,7 +85,7 @@ export default function AdminUsersPage() {
                 <th className="px-6 py-4 font-semibold text-slate-700">Customer</th>
                 <th className="px-6 py-4 font-semibold text-slate-700">Role</th>
                 <th className="px-6 py-4 font-semibold text-slate-700">Joined</th>
-                <th className="px-6 py-4 font-semibold text-slate-700">Orders</th>
+                <th className="px-6 py-4 font-semibold text-slate-700 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200">
@@ -87,8 +116,28 @@ export default function AdminUsersPage() {
                   <td className="px-6 py-4 text-slate-600 text-sm">
                     {new Date(user.createdAt).toLocaleDateString()}
                   </td>
-                  <td className="px-6 py-4 text-slate-900 font-medium">
-                    {user._count?.orders || 0}
+                  <td className="px-6 py-4 text-right">
+                    {user.email !== 'bharatha9483@gmail.com' ? (
+                      user.role === 'admin' ? (
+                        <button 
+                          onClick={() => handleRoleChange(user.id, 'customer')}
+                          disabled={updatingId === user.id}
+                          className="text-amber-600 hover:text-amber-700 font-semibold text-sm disabled:opacity-50"
+                        >
+                          {updatingId === user.id ? 'Updating...' : 'Demote to Customer'}
+                        </button>
+                      ) : (
+                        <button 
+                          onClick={() => handleRoleChange(user.id, 'admin')}
+                          disabled={updatingId === user.id}
+                          className="text-blue-600 hover:text-blue-700 font-semibold text-sm disabled:opacity-50"
+                        >
+                          {updatingId === user.id ? 'Updating...' : 'Make Admin'}
+                        </button>
+                      )
+                    ) : (
+                      <span className="text-xs text-slate-400 italic">Primary Owner</span>
+                    )}
                   </td>
                 </tr>
               ))}

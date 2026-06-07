@@ -32,17 +32,38 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.isAdmin = exports.verifyToken = void 0;
 const admin = __importStar(require("firebase-admin"));
+const path_1 = __importDefault(require("path"));
+const fs_1 = __importDefault(require("fs"));
 // Initialize Firebase Admin
-// You will need to add FIREBASE_SERVICE_ACCOUNT as an environment variable in Render
 if (!admin.apps.length) {
     try {
-        const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT || '{}');
-        admin.initializeApp({
-            credential: admin.credential.cert(serviceAccount),
-        });
+        const keyPath = path_1.default.join(process.cwd(), 'firebase-key.json');
+        if (fs_1.default.existsSync(keyPath)) {
+            // Prefer local JSON file for testing
+            admin.initializeApp({
+                credential: admin.credential.cert(keyPath),
+            });
+            console.log('Firebase Admin initialized using firebase-key.json');
+        }
+        else {
+            // Fallback to Env variable for production (Render)
+            const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT || '{}');
+            if (serviceAccount.project_id) {
+                admin.initializeApp({
+                    credential: admin.credential.cert(serviceAccount),
+                });
+                console.log('Firebase Admin initialized using Environment Variable');
+            }
+            else {
+                console.error('Firebase Admin Error: No credentials found (JSON or ENV)');
+            }
+        }
     }
     catch (error) {
         console.error('Firebase Admin initialization error:', error);

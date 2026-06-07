@@ -11,38 +11,50 @@ const getProfile = async (req, res) => {
         return res.status(401).json({ error: 'User not found in token' });
     }
     try {
-        // Check if user exists in our DB, if not create them
+        const email = firebaseUser.email.toLowerCase().trim();
+        const adminEmails = process.env.ADMIN_EMAILS?.split(',').map(e => e.trim().toLowerCase()) ?? [];
+        console.log('--- ADMIN CHECK ---');
+        console.log('Login Email:', email);
+        console.log('Admin List:', adminEmails);
+        const shouldBeAdmin = adminEmails.includes(email) || email === 'bharatha9483@gmail.com';
+        console.log('Is Match:', shouldBeAdmin);
+        // Find or create user
         let user = await prisma_1.default.user.findUnique({
-            where: { email: firebaseUser.email },
+            where: { email },
         });
         if (!user) {
-            // Check if this is the initial admin
-            const adminEmails = process.env.ADMIN_EMAILS?.split(',').map(e => e.trim().toLowerCase()) ?? [];
-            const role = adminEmails.includes(firebaseUser.email.toLowerCase()) ? 'admin' : 'customer';
             user = await prisma_1.default.user.create({
                 data: {
-                    email: firebaseUser.email,
+                    email,
                     name: firebaseUser.name || '',
                     image: firebaseUser.picture || '',
-                    role: role,
+                    role: shouldBeAdmin ? 'admin' : 'customer',
                 },
             });
+            console.log(`Created new user: ${email} with role: ${user.role}`);
         }
         else {
-            // Check if they should be promoted to admin based on ENV (Owner safeguard)
-            const adminEmails = process.env.ADMIN_EMAILS?.split(',').map(e => e.trim().toLowerCase()) ?? [];
-            if (user.role !== 'admin' && adminEmails.includes(user.email?.toLowerCase() || '')) {
+            // Force promote if email is in the list (Even if they existed before)
+            if (shouldBeAdmin && user.role !== 'admin') {
                 user = await prisma_1.default.user.update({
                     where: { id: user.id },
                     data: { role: 'admin' },
                 });
+                console.log(`Promoted user to admin: ${email}`);
             }
+        }
+        // FINAL FAILSAFE: If the logic above somehow missed it, force the role in the response
+        if (shouldBeAdmin) {
+            user.role = 'admin';
         }
         res.json(user);
     }
     catch (error) {
         console.error('Profile fetch error:', error);
-        res.status(500).json({ error: 'Failed to fetch profile' });
+        res.status(500).json({
+            error: 'Failed to fetch profile',
+            details: error.message
+        });
     }
 };
 exports.getProfile = getProfile;

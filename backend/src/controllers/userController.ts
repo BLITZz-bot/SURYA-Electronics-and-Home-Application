@@ -95,11 +95,17 @@ export const updateUser = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { role } = req.body;
-    const user = await prisma.user.update({
+
+    const user = await prisma.user.findUnique({ where: { id: id as string } });
+    if (user?.email === 'bharatha9483@gmail.com') {
+      return res.status(403).json({ error: 'Primary owner cannot be demoted' });
+    }
+
+    const updatedUser = await prisma.user.update({
       where: { id: id as string },
       data: { role },
     });
-    res.json(user);
+    res.json(updatedUser);
   } catch (error) {
     res.status(500).json({ error: 'Failed to update user' });
   }
@@ -108,6 +114,12 @@ export const updateUser = async (req: Request, res: Response) => {
 export const deleteUser = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
+
+    const user = await prisma.user.findUnique({ where: { id: id as string } });
+    if (user?.email === 'bharatha9483@gmail.com') {
+      return res.status(403).json({ error: 'Primary owner cannot be deleted' });
+    }
+
     await prisma.user.delete({
       where: { id: id as string },
     });
