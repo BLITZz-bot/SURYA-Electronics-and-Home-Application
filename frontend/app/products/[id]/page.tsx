@@ -17,6 +17,9 @@ export default async function ProductPage({ params }: ProductPageProps) {
       where: {
         id: params.id,
       },
+      include: {
+        category: { select: { name: true } }
+      }
     });
   } catch (error) {
     console.error("Product Page Error:", error);
@@ -38,7 +41,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
             />
             <div className="mt-6 space-y-4">
               <div>
-                <p className="text-sm uppercase tracking-[0.3em] text-sky-700">{product.category}</p>
+                <p className="text-sm uppercase tracking-[0.3em] text-sky-700">{(product as any).category?.name || 'Electronics'}</p>
                 <h1 className="mt-3 text-4xl font-semibold text-slate-900">{product.name}</h1>
                 <p className="mt-4 text-slate-600">{product.description}</p>
               </div>
