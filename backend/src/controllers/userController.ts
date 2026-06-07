@@ -49,9 +49,12 @@ export const getProfile = async (req: Request, res: Response) => {
     }
 
     res.json(user);
-  } catch (error) {
+  } catch (error: any) {
     console.error('Profile fetch error:', error);
-    res.status(500).json({ error: 'Failed to fetch profile' });
+    res.status(500).json({ 
+      error: 'Failed to fetch profile', 
+      details: error.message 
+    });
   }
 };
 
