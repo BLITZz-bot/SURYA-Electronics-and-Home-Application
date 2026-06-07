@@ -3,9 +3,11 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { onAuthStateChanged, User, signOut as firebaseSignOut, getIdToken } from "firebase/auth";
 import { auth } from "../lib/firebase";
+import { getApiUrl } from "../lib/api-utils";
 
 interface AuthContextType {
   user: User | null;
+  dbUser: any | null;
   token: string | null;
   loading: boolean;
   isAdmin: boolean;
@@ -14,6 +16,7 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
+  dbUser: null,
   token: null,
   loading: true,
   isAdmin: false,
@@ -22,23 +25,38 @@ const AuthContext = createContext<AuthContextType>({
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [dbUser, setDbUser] = useState<any | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      setUser(user);
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      setLoading(true);
+      setUser(firebaseUser);
       
-      if (user) {
-        const idToken = await getIdToken(user);
-        setToken(idToken);
-        
-        // Check Admin via Email (Client-side for UI toggles)
-        const adminEmails = process.env.NEXT_PUBLIC_ADMIN_EMAILS?.split(",").map(e => e.trim().toLowerCase()) ?? [];
-        setIsAdmin(user.email ? adminEmails.includes(user.email.toLowerCase()) : false);
+      if (firebaseUser) {
+        try {
+          const idToken = await getIdToken(firebaseUser);
+          setToken(idToken);
+          
+          // SECURE: Fetch true role from Backend (Single source of truth)
+          const response = await fetch(getApiUrl('/api/users/profile'), {
+            headers: { 'Authorization': `Bearer ${idToken}` }
+          });
+          
+          if (response.ok) {
+            const profile = await response.json();
+            setDbUser(profile);
+            setIsAdmin(profile.role === 'admin');
+          }
+        } catch (err) {
+          console.error("Auth initialization error:", err);
+          setIsAdmin(false);
+        }
       } else {
         setToken(null);
+        setDbUser(null);
         setIsAdmin(false);
       }
       
@@ -53,7 +71,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, loading, isAdmin, logout }}>
+    <AuthContext.Provider value={{ user, dbUser, token, loading, isAdmin, logout }}>
       {children}
     </AuthContext.Provider>
   );
