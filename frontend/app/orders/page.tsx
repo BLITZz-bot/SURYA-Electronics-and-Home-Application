@@ -1,4 +1,4 @@
-'use dynamic';
+export const dynamic = "force-dynamic";
 
 import Link from "next/link";
 import { getServerSession } from "next-auth/next";
