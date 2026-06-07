@@ -60,10 +60,6 @@ Set your Google OAuth callback URL to:
 http://localhost:3000/api/auth/callback/google
 ```
 
-## Local database
-
-This project uses SQLite for local development. The data file is stored at `frontend/dev.db`.
-
 ## Features
 
 - Google-only registration/login
