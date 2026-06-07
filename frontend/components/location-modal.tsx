@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { X, MapPin, Navigation, Plus, CheckCircle2, ChevronRight, Loader2, Globe } from "lucide-react";
 import { cn } from "../lib/utils";
 import { useAuth } from "../context/auth-context";
