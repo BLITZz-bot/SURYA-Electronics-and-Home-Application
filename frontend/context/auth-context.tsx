@@ -40,8 +40,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           const idToken = await getIdToken(firebaseUser);
           setToken(idToken);
           
-          // SECURE: Fetch true role from Backend (Single source of truth)
-          const response = await fetch(getApiUrl('/api/users/profile'), {
+          const url = getApiUrl('/api/users/profile');
+          console.log("Fetching profile from:", url);
+          const response = await fetch(url, {
             headers: { 'Authorization': `Bearer ${idToken}` }
           });
           
