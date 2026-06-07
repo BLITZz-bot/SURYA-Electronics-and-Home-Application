@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { useEffect, useState } from "react";
 import { getApiUrl } from "../../../../lib/api-utils";
 import { useAuth } from "../../../../context/auth-context";
@@ -216,7 +217,7 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
               </div>
               {imageUrl && (
                 <div className="relative w-40 h-40 rounded-2xl overflow-hidden border border-slate-200">
-                  <img src={imageUrl} alt="Preview" className="w-full h-full object-cover" />
+                  <Image src={imageUrl} alt="Preview" fill className="object-cover" />
                   <button
                     type="button"
                     onClick={() => setImageUrl('')}

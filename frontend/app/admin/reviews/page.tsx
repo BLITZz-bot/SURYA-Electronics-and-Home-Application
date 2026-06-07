@@ -1,25 +1,17 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useAuth } from "../../../context/auth-context";
 import { getApiUrl } from "../../../lib/api-utils";
-import { Star, Trash2, User, Package, ShieldCheck, MessageSquare, RefreshCcw } from "lucide-react";
-import { cn } from "../../../lib/utils";
+import { Star, Trash2, User, Package, ShieldCheck, MessageSquare } from "lucide-react";
 
 export default function AdminReviewsPage() {
   const { token, isAdmin } = useAuth();
   const [reviews, setReviews] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (token && isAdmin) fetchReviews();
-  }, [token, isAdmin]);
-
-  async function fetchReviews() {
+  const fetchReviews = useCallback(async () => {
     try {
-      // In a real app, we might need a dedicated admin reviews endpoint to see all
-      // For now, we'll fetch products and their reviews or similar.
-      // Assuming a generic /api/reviews endpoint for admins exists or using product reviews.
       const res = await fetch(getApiUrl("/api/products"), {
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -35,7 +27,11 @@ export default function AdminReviewsPage() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [token]);
+
+  useEffect(() => {
+    if (token && isAdmin) fetchReviews();
+  }, [token, isAdmin, fetchReviews]);
 
   async function deleteReview(id: string) {
     if (!confirm("Are you sure?")) return;
@@ -83,7 +79,7 @@ export default function AdminReviewsPage() {
                      <span className="text-sm font-black text-gray-900 ml-2">{review.title}</span>
                   </div>
 
-                  <p className="text-sm text-gray-600 leading-relaxed font-medium italic">"{review.description}"</p>
+                  <p className="text-sm text-gray-600 leading-relaxed font-medium italic">&quot;{review.description}&quot;</p>
                   
                   <div className="flex items-center gap-3 pt-2">
                      <div className="flex items-center gap-1.5 px-3 py-1 bg-blue-50 text-[#0F3D6E] rounded-full border border-blue-100">
