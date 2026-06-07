@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useAuth } from "../../../context/auth-context";
 import { getApiUrl } from "../../../lib/api-utils";
 import Link from "next/link";
@@ -11,7 +11,7 @@ import {
 import { 
   TrendingUp, DollarSign, Users, ShoppingCart, 
   Package, Calendar, Activity, Loader2,
-  CheckCircle2, ShoppingBag, BarChart3,
+  CheckCircle2, ShoppingBag, BarChart3, PieChart as PieIcon,
   Layers, History, Boxes
 } from "lucide-react";
 import { cn } from "../../../lib/utils";
@@ -24,11 +24,7 @@ export default function AnalyticsPage() {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (token && isAdmin) fetchAnalytics();
-  }, [token, isAdmin]);
-
-  async function fetchAnalytics() {
+  const fetchAnalytics = useCallback(async () => {
     try {
       const res = await fetch(getApiUrl("/api/settings/stats"), {
         headers: { 'Authorization': `Bearer ${token}` }
@@ -39,7 +35,11 @@ export default function AnalyticsPage() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [token]);
+
+  useEffect(() => {
+    if (token && isAdmin) fetchAnalytics();
+  }, [token, isAdmin, fetchAnalytics]);
 
   if (loading) {
     return (

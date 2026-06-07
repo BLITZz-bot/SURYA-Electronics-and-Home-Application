@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useAuth } from "../../../context/auth-context";
 import { getApiUrl } from "../../../lib/api-utils";
 import Link from "next/link";
@@ -20,11 +20,7 @@ export default function AdminOffersPage() {
     status: "active"
   });
 
-  useEffect(() => {
-    if (token && isAdmin) fetchOffers();
-  }, [token, isAdmin]);
-
-  async function fetchOffers() {
+  const fetchOffers = useCallback(async () => {
     setLoading(true);
     try {
       const res = await fetch(getApiUrl("/api/offers"), {
@@ -36,7 +32,11 @@ export default function AdminOffersPage() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [token]);
+
+  useEffect(() => {
+    if (token && isAdmin) fetchOffers();
+  }, [token, isAdmin, fetchOffers]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();

@@ -17,7 +17,7 @@ interface ProductPageProps {
 }
 
 export default async function ProductPage({ params }: ProductPageProps) {
-  let product = null;
+  let product: any = null;
   let relatedProducts: any[] = [];
   let activeOffers: any[] = [];
 

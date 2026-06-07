@@ -1,22 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { getApiUrl } from "../../../lib/api-utils";
 import { useAuth } from "../../../context/auth-context";
 import Link from "next/link";
 import { 
   Search, 
-  Filter, 
-  ShoppingCart, 
   Eye, 
-  MoreVertical, 
   Download, 
-  CreditCard, 
-  Truck, 
-  CheckCircle2,
-  Clock,
-  ChevronRight,
-  ArrowUpDown
+  ShoppingCart,
+  Clock
 } from "lucide-react";
 import { cn } from "../../../lib/utils";
 
@@ -27,13 +20,7 @@ export default function AdminOrdersPage() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
 
-  useEffect(() => {
-    if (token && isAdmin) {
-      fetchOrders();
-    }
-  }, [token, isAdmin]);
-
-  const fetchOrders = async () => {
+  const fetchOrders = useCallback(async () => {
     try {
       const res = await fetch(getApiUrl('/api/orders'), {
         headers: { 'Authorization': `Bearer ${token}` }
@@ -47,7 +34,13 @@ export default function AdminOrdersPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [token]);
+
+  useEffect(() => {
+    if (token && isAdmin) {
+      fetchOrders();
+    }
+  }, [token, isAdmin, fetchOrders]);
 
   const filteredOrders = orders.filter(order => {
     const matchesSearch = 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useAuth } from "../../../context/auth-context";
 import { getApiUrl } from "../../../lib/api-utils";
 import { 
@@ -24,11 +24,7 @@ export default function InventoryPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
 
-  useEffect(() => {
-    if (token && isAdmin) fetchInventory();
-  }, [token, isAdmin]);
-
-  async function fetchInventory() {
+  const fetchInventory = useCallback(async () => {
     try {
       const res = await fetch(getApiUrl("/api/products"), {
         headers: { 'Authorization': `Bearer ${token}` }
@@ -39,7 +35,11 @@ export default function InventoryPage() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [token]);
+
+  useEffect(() => {
+    if (token && isAdmin) fetchInventory();
+  }, [token, isAdmin, fetchInventory]);
 
   const filtered = products.filter(p => p.name.toLowerCase().includes(search.toLowerCase()));
   const outOfStock = products.filter(p => p.stock === 0);

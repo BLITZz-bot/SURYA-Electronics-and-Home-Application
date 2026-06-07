@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useAuth } from "../../context/auth-context";
 import { getApiUrl } from "../../lib/api-utils";
 import { 
@@ -20,7 +20,6 @@ import {
 import { motion } from "framer-motion";
 import { 
   TrendingUp, 
-  TrendingDown, 
   DollarSign, 
   Users, 
   Package, 
@@ -28,10 +27,10 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   RefreshCcw,
-  ExternalLink,
   Plus
 } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import { cn } from "../../lib/utils";
 
 const COLORS = ['#0F3D6E', '#5DADE2', '#F59E0B', '#10B981', '#EF4444', '#8B5CF6'];
@@ -41,15 +40,7 @@ export default function AdminDashboard() {
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (token && isAdmin) {
-      fetchStats();
-      const interval = setInterval(fetchStats, 30000); // Refresh every 30s
-      return () => clearInterval(interval);
-    }
-  }, [token, isAdmin]);
-
-  async function fetchStats() {
+  const fetchStats = useCallback(async () => {
     try {
       const res = await fetch(getApiUrl("/api/settings/stats"), {
         headers: { Authorization: `Bearer ${token}` }
@@ -63,7 +54,15 @@ export default function AdminDashboard() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [token]);
+
+  useEffect(() => {
+    if (token && isAdmin) {
+      fetchStats();
+      const interval = setInterval(fetchStats, 30000); // Refresh every 30s
+      return () => clearInterval(interval);
+    }
+  }, [token, isAdmin, fetchStats]);
 
   if (loading) {
     return (
@@ -268,7 +267,14 @@ export default function AdminDashboard() {
               {(stats?.lowStockProducts || []).length > 0 ? (stats?.lowStockProducts || []).map((p: any) => (
                 <div key={p.id} className="flex items-center justify-between p-2 hover:bg-gray-50 rounded-2xl transition-colors">
                    <div className="flex items-center gap-4">
-                      <img src={p.imageUrl} alt="" className="w-12 h-12 object-contain bg-gray-50 rounded-2xl p-2 border border-gray-100 shadow-sm" />
+                      <div className="w-12 h-12 relative bg-gray-50 rounded-2xl overflow-hidden p-2 border border-gray-100 shadow-sm">
+                        <Image 
+                          src={p.imageUrl} 
+                          alt={p.name} 
+                          fill
+                          className="object-contain p-1" 
+                        />
+                      </div>
                       <div>
                          <p className="text-sm font-black text-gray-900 line-clamp-1">{p.name}</p>
                          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{p.brand}</p>

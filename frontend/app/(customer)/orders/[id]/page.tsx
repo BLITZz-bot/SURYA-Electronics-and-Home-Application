@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import Image from "next/image";
 import { useAuth } from "../../../../context/auth-context";
 import { getApiUrl } from "../../../../lib/api-utils";
 import Link from "next/link";
-import { ChevronLeft, Package, MapPin, CreditCard, Clock, CheckCircle2 } from "lucide-react";
+import { ChevronLeft, Package, MapPin } from "lucide-react";
 import { cn } from "../../../../lib/utils";
 
 interface OrderDetailProps {
@@ -12,7 +13,7 @@ interface OrderDetailProps {
 }
 
 export default function OrderDetailPage({ params }: OrderDetailProps) {
-  const { token, user } = useAuth();
+  const { token } = useAuth();
   const [order, setOrder] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
@@ -79,7 +80,14 @@ export default function OrderDetailPage({ params }: OrderDetailProps) {
                  <div className="divide-y divide-gray-50">
                     {order.items?.map((item: any) => (
                       <div key={item.id} className="py-6 first:pt-0 last:pb-0 flex gap-6">
-                         <img src={item.product?.imageUrl} alt="" className="w-20 h-20 object-contain bg-gray-50 rounded-2xl p-2" />
+                         <div className="w-20 h-20 relative bg-gray-50 rounded-2xl overflow-hidden p-2 border border-gray-100">
+                            <Image 
+                              src={item.product?.imageUrl} 
+                              alt={item.product?.name || "Product"} 
+                              fill
+                              className="object-contain p-2" 
+                            />
+                         </div>
                          <div className="flex-1">
                             <Link href={`/products/${item.product?.id}`} className="font-bold text-gray-900 hover:text-orange-600 transition-colors line-clamp-1">{item.product?.name}</Link>
                             <p className="text-xs text-gray-400 mt-1 uppercase font-black">Qty: {item.quantity} • ₹{Number(item.price).toLocaleString()}</p>

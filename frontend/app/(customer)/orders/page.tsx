@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useAuth } from "../../../context/auth-context";
 import { useEffect, useState, useCallback } from "react";
 import { getApiUrl } from "../../../lib/api-utils";
@@ -78,7 +79,7 @@ export default function OrdersPage() {
         ) : orders.length === 0 ? (
           <div className="rounded-3xl border border-gray-100 bg-white p-20 shadow-sm text-center">
             <svg className="w-16 h-16 text-gray-100 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" /></svg>
-            <p className="text-xl font-bold text-gray-800">You haven't placed any orders yet.</p>
+            <p className="text-xl font-bold text-gray-800">You haven&apos;t placed any orders yet.</p>
             <p className="text-gray-400 mt-1 mb-8">Check out our latest arrivals and start shopping!</p>
             <Link href="/products" className="bg-amazon-orange text-white px-10 py-3 rounded-full font-bold shadow-lg transform transition-all active:scale-95">Browse Products</Link>
           </div>
@@ -115,8 +116,13 @@ export default function OrdersPage() {
                   
                   {order.items.map((item: any) => (
                     <div key={item.id} className="flex gap-6 items-start">
-                      <div className="h-24 w-24 flex-shrink-0 bg-gray-50 rounded-xl flex items-center justify-center p-3 border border-gray-100">
-                        <img src={item.product?.imageUrl} alt={item.product?.name} className="max-h-full object-contain" />
+                      <div className="h-24 w-24 flex-shrink-0 bg-gray-50 rounded-xl flex items-center justify-center p-3 border border-gray-100 relative overflow-hidden">
+                        <Image 
+                          src={item.product?.imageUrl} 
+                          alt={item.product?.name || "Product"} 
+                          fill
+                          className="object-contain p-2" 
+                        />
                       </div>
                       <div className="flex-1 min-w-0">
                         <Link href={`/products/${item.product?.id}`} className="text-[#0F3D6E] font-bold text-lg hover:text-orange-600 hover:underline line-clamp-2 leading-tight mb-1">

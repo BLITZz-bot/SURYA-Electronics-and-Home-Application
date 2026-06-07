@@ -1,23 +1,18 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { getApiUrl } from "../../../lib/api-utils";
 import { useAuth } from "../../../context/auth-context";
 import { 
   Tag, 
   Plus, 
-  Trash2, 
   Link as LinkIcon, 
-  Image as ImageIcon, 
-  Search, 
-  MoreVertical,
   X,
-  CheckCircle2,
   RefreshCcw,
   LayoutGrid
 } from "lucide-react";
-import { cn } from "../../../lib/utils";
 
 export default function CategoriesPage() {
   const [categories, setCategories] = useState<any[]>([]);
@@ -28,11 +23,7 @@ export default function CategoriesPage() {
   const { token, isAdmin } = useAuth();
   const router = useRouter();
 
-  useEffect(() => {
-    if (token && isAdmin) fetchCategories();
-  }, [token, isAdmin]);
-
-  const fetchCategories = async () => {
+  const fetchCategories = useCallback(async () => {
     try {
       const res = await fetch(getApiUrl("/api/categories"));
       if (res.ok) {
@@ -44,7 +35,11 @@ export default function CategoriesPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    if (token && isAdmin) fetchCategories();
+  }, [token, isAdmin, fetchCategories]);
 
   const handleAddCategory = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -172,7 +167,7 @@ export default function CategoriesPage() {
             <button type="submit" className="flex-1 bg-[#0F3D6E] text-white py-4 rounded-2xl font-black shadow-xl shadow-[#0F3D6E]/20 hover:bg-black transition-all">
               Establish Department
             </button>
-            <button type="button" onClick={() => setIsAdding(false)} className="px-8 py-4 bg-gray-100 rounded-2xl font-black text-gray-500 hover:bg-gray-200 transition-all">
+            <button type="button" onClick={() => setIsAdding(false)} className="px-8 py-4 bg-gray-100 rounded-2xl font-black text-gray-500 hover:bg-200 transition-all">
               Discard
             </button>
           </div>
@@ -185,9 +180,9 @@ export default function CategoriesPage() {
             <div className="absolute top-0 right-0 w-32 h-32 bg-gray-50 rounded-bl-[80px] -mr-8 -mt-8 group-hover:bg-[#0F3D6E]/5 transition-colors" />
             
             <div className="relative z-10 flex flex-col items-center text-center space-y-4">
-               <div className="w-20 h-20 rounded-3xl bg-gray-50 border border-gray-100 flex items-center justify-center p-4 shadow-inner group-hover:scale-110 transition-transform duration-500">
+               <div className="w-20 h-20 rounded-3xl bg-gray-50 border border-gray-100 flex items-center justify-center p-4 shadow-inner group-hover:scale-110 transition-transform duration-500 relative overflow-hidden">
                   {cat.image ? (
-                    <img src={cat.image} alt="" className="max-h-full max-w-full object-contain" />
+                    <Image src={cat.image} alt={cat.name} fill className="object-contain p-2" />
                   ) : (
                     <LayoutGrid size={32} className="text-gray-300" />
                   )}

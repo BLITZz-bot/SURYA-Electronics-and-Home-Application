@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useCallback } from "react";
+import Image from "next/image";
 import { useAuth } from "../../../../context/auth-context";
 import { getApiUrl } from "../../../../lib/api-utils";
 
@@ -152,7 +153,14 @@ export default function OrderDetailPage({ params }: PageProps) {
             <div className="divide-y divide-slate-100">
               {order.items.map((item: any) => (
                 <div key={item.id} className="p-6 flex items-center gap-6">
-                  <img src={item.product.imageUrl} alt="" className="h-20 w-20 rounded-xl object-cover bg-slate-100" />
+                  <div className="h-20 w-20 relative rounded-xl overflow-hidden bg-slate-100 shrink-0">
+                    <Image 
+                      src={item.product.imageUrl} 
+                      alt={item.product.name} 
+                      fill 
+                      className="object-cover" 
+                    />
+                  </div>
                   <div className="flex-1">
                     <h3 className="font-semibold text-slate-900">{item.product.name}</h3>
                     <p className="text-sm text-slate-600">{item.product.brand}</p>

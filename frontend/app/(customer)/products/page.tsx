@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { getApiUrl } from "../../../lib/api-utils";
 import ProductCard from "../../../components/product-card";
@@ -18,11 +18,7 @@ export default function ProductsPage({ searchParams }: ProductsPageProps) {
   const [loading, setLoading] = useState(true);
   const { category, search } = searchParams;
   
-  useEffect(() => {
-    fetchProducts();
-  }, [category, search]);
-
-  async function fetchProducts() {
+  const fetchProducts = useCallback(async () => {
     setLoading(true);
     try {
       const url = getApiUrl('/api/products');
@@ -50,7 +46,11 @@ export default function ProductsPage({ searchParams }: ProductsPageProps) {
     } finally {
       setLoading(false);
     }
-  }
+  }, [category, search]);
+
+  useEffect(() => {
+    fetchProducts();
+  }, [fetchProducts]);
 
   if (loading) {
     return (
@@ -75,17 +75,14 @@ export default function ProductsPage({ searchParams }: ProductsPageProps) {
             <div className="text-center bg-white p-16 rounded-[50px] border border-dashed border-gray-200 shadow-sm max-w-2xl mx-auto">
               <Search size={64} className="mx-auto text-gray-100 mb-6" strokeWidth={3} />
               <h2 className="text-2xl font-black text-gray-900 mb-2 tracking-tight">Zero matches for your search.</h2>
-              <p className="text-gray-400 font-medium italic mb-8">We couldn't find anything matching "{search || category}". Try adjusting your filters or checking your spelling.</p>
+              <p className="text-gray-400 font-medium italic mb-8">We couldn&apos;t find anything matching &quot;{search || category}&quot;. Try adjusting your filters or checking your spelling.</p>
               <Link href="/products" className="inline-block bg-[#0F3D6E] text-white px-10 py-4 rounded-full font-black shadow-xl shadow-[#0F3D6E]/20 transform active:scale-95 transition-all uppercase text-xs tracking-widest">Explore All Inventory</Link>
             </div>
             
-            {/* Suggestions - Fetching all products if specific search failed */}
+            {/* Suggestions */}
             <div className="space-y-8">
                <h3 className="text-xl font-black text-gray-900 uppercase tracking-tighter italic border-l-4 border-[#5DADE2] pl-4 tracking-widest">Recommended products</h3>
                <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-                  {/* Fetch all again or use the allProducts variable if I had it. 
-                      Since this is a server component, I'll just use a local fetch or similar if I restructured.
-                      For now, I'll just show the empty message and suggest clearing filters. */}
                   <p className="col-span-full text-center text-gray-300 italic font-bold">Please clear filters to see our full catalog.</p>
                </div>
             </div>

@@ -61,6 +61,8 @@ export default function AdminProductForm({ initialData, onSuccess, onCancel }: A
         categoryId: initialData.categoryId,
         brand: initialData.brand,
         imageUrl: initialData.imageUrl,
+        offerTitle: initialData.offerTitle || "",
+        offerDescription: initialData.offerDescription || "",
       });
     } else {
       setForm(defaultForm);
