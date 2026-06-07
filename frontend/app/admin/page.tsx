@@ -5,13 +5,19 @@ import { useEffect, useState } from "react";
 import { getApiUrl } from "../../lib/api-utils";
 import { useAuth } from "../../context/auth-context";
 
+// Simple global cache to prevent re-fetching on tab switch
+let cachedStats: any = null;
+let lastFetchTime = 0;
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
 export default function AdminDashboard() {
   const { token, loading: authLoading, isAdmin } = useAuth();
-  const [stats, setStats] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState<any>(cachedStats);
+  const [loading, setLoading] = useState(!cachedStats);
 
   useEffect(() => {
-    if (token && isAdmin) {
+    const now = Date.now();
+    if (token && isAdmin && (!cachedStats || now - lastFetchTime > CACHE_DURATION)) {
       fetchStats();
     }
   }, [token, isAdmin]);
@@ -24,6 +30,8 @@ export default function AdminDashboard() {
       if (res.ok) {
         const data = await res.json();
         setStats(data);
+        cachedStats = data;
+        lastFetchTime = Date.now();
       }
     } catch (err) {
       console.error("Failed to fetch dashboard stats:", err);
