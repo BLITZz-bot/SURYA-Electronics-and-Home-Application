@@ -5,7 +5,7 @@ export const getAddresses = async (req: Request, res: Response) => {
   const firebaseUser = (req as any).user;
   try {
     const user = await prisma.user.findUnique({
-      where: { email: firebaseUser.email },
+      where: { email: firebaseUser.email as string },
       include: { addresses: true }
     });
     res.json(user?.addresses || []);
@@ -22,7 +22,7 @@ export const createAddress = async (req: Request, res: Response) => {
   } = req.body;
 
   try {
-    const user = await prisma.user.findUnique({ where: { email: firebaseUser.email } });
+    const user = await prisma.user.findUnique({ where: { email: firebaseUser.email as string } });
     if (!user) return res.status(404).json({ error: 'User not found' });
 
     if (isDefault) {
@@ -58,9 +58,9 @@ export const createAddress = async (req: Request, res: Response) => {
 
 export const deleteAddress = async (req: Request, res: Response) => {
   const firebaseUser = (req as any).user;
-  const { id } = req.params;
+  const id = req.params.id as string;
   try {
-    const user = await prisma.user.findUnique({ where: { email: firebaseUser.email } });
+    const user = await prisma.user.findUnique({ where: { email: firebaseUser.email as string } });
     const address = await prisma.address.findUnique({ where: { id } });
     
     if (!address || address.userId !== user?.id) {
@@ -76,14 +76,14 @@ export const deleteAddress = async (req: Request, res: Response) => {
 
 export const updateAddress = async (req: Request, res: Response) => {
   const firebaseUser = (req as any).user;
-  const { id } = req.params;
+  const id = req.params.id as string;
   const { 
     name, phone, houseNumber, street, area, city, 
     district, state, country, postalCode, latitude, longitude, isDefault 
   } = req.body;
 
   try {
-    const user = await prisma.user.findUnique({ where: { email: firebaseUser.email } });
+    const user = await prisma.user.findUnique({ where: { email: firebaseUser.email as string } });
     const existing = await prisma.address.findUnique({ where: { id } });
     
     if (!existing || existing.userId !== user?.id) {
@@ -123,10 +123,10 @@ export const updateAddress = async (req: Request, res: Response) => {
 
 export const setDefaultAddress = async (req: Request, res: Response) => {
   const firebaseUser = (req as any).user;
-  const { id } = req.params;
+  const id = req.params.id as string;
 
   try {
-    const user = await prisma.user.findUnique({ where: { email: firebaseUser.email } });
+    const user = await prisma.user.findUnique({ where: { email: firebaseUser.email as string } });
     if (!user) return res.status(404).json({ error: 'User not found' });
 
     await prisma.$transaction([

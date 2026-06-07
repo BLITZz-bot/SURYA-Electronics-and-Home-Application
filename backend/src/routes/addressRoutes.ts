@@ -1,5 +1,11 @@
 import { Router } from 'express';
-import { getAddresses, createAddress, deleteAddress } from '../controllers/addressController';
+import { 
+  getAddresses, 
+  createAddress, 
+  deleteAddress, 
+  updateAddress, 
+  setDefaultAddress 
+} from '../controllers/addressController';
 import { verifyToken } from '../middleware/authMiddleware';
 
 const router = Router();

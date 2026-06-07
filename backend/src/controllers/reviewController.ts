@@ -7,7 +7,7 @@ export const createReview = async (req: Request, res: Response) => {
 
   try {
     const user = await prisma.user.findUnique({
-      where: { email: firebaseUser.email }
+      where: { email: firebaseUser.email as string }
     });
 
     if (!user) return res.status(404).json({ error: 'User not found' });
@@ -51,11 +51,11 @@ export const createReview = async (req: Request, res: Response) => {
 
 export const voteHelpful = async (req: Request, res: Response) => {
   const firebaseUser = (req as any).user;
-  const { reviewId } = req.params;
+  const reviewId = req.params.reviewId as string;
 
   try {
     const user = await prisma.user.findUnique({
-      where: { email: firebaseUser.email }
+      where: { email: firebaseUser.email as string }
     });
 
     if (!user) return res.status(404).json({ error: 'User not found' });
@@ -82,11 +82,11 @@ export const voteHelpful = async (req: Request, res: Response) => {
 
 export const deleteReview = async (req: Request, res: Response) => {
   const firebaseUser = (req as any).user;
-  const { id } = req.params;
+  const id = req.params.id as string;
 
   try {
     const user = await prisma.user.findUnique({
-      where: { email: firebaseUser.email }
+      where: { email: firebaseUser.email as string }
     });
 
     const review = await prisma.review.findUnique({ where: { id } });

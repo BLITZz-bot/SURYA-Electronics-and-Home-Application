@@ -49,7 +49,7 @@ export const createOffer = async (req: Request, res: Response) => {
 
 export const updateOffer = async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
     const { title, description, type, startDate, endDate, status } = req.body;
     const offer = await prisma.offer.update({
       where: { id },
@@ -70,7 +70,7 @@ export const updateOffer = async (req: Request, res: Response) => {
 
 export const deleteOffer = async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
     await prisma.offer.delete({ where: { id } });
     res.json({ success: true });
   } catch (error) {

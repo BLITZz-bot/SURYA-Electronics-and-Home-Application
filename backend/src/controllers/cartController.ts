@@ -6,7 +6,7 @@ export const getCart = async (req: Request, res: Response) => {
   try {
     const cartItems = await prisma.cartItem.findMany({
       where: {
-        user: { email: firebaseUser.email }
+        user: { email: firebaseUser.email as string }
       },
       include: { product: true }
     });
@@ -27,13 +27,13 @@ export const addToCart = async (req: Request, res: Response) => {
   try {
     // 1. Find or sync user
     let user = await prisma.user.findUnique({
-      where: { email: firebaseUser.email }
+      where: { email: firebaseUser.email as string }
     });
 
     if (!user) {
       console.log('User not found in cart controller, syncing from firebase user:', firebaseUser.email);
       const adminEmails = process.env.ADMIN_EMAILS?.split(',').map(e => e.trim().toLowerCase()) ?? [];
-      const email = firebaseUser.email.toLowerCase();
+      const email = (firebaseUser.email as string).toLowerCase();
       user = await prisma.user.create({
         data: {
           email,

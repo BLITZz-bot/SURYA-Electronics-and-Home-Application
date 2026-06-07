@@ -25,7 +25,7 @@ export const getMyOrders = async (req: Request, res: Response) => {
   try {
     const orders = await prisma.order.findMany({
       where: {
-        user: { email: firebaseUser.email }
+        user: { email: firebaseUser.email as string }
       },
       orderBy: { createdAt: 'desc' },
       include: {
@@ -40,9 +40,9 @@ export const getMyOrders = async (req: Request, res: Response) => {
 
 export const getOrderById = async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
     const order = await prisma.order.findUnique({
-      where: { id: id as string },
+      where: { id },
       include: {
         user: { select: { name: true, email: true } },
         items: { include: { product: true } }
@@ -57,10 +57,10 @@ export const getOrderById = async (req: Request, res: Response) => {
 
 export const updateOrder = async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
     const { status, paymentStatus } = req.body;
     const order = await prisma.order.update({
-      where: { id: id as string },
+      where: { id },
       data: { status, paymentStatus },
     });
     res.json(order);
@@ -71,9 +71,9 @@ export const updateOrder = async (req: Request, res: Response) => {
 
 export const deleteOrder = async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
     await prisma.order.delete({
-      where: { id: id as string },
+      where: { id },
     });
     res.json({ success: true });
   } catch (error) {
@@ -94,7 +94,7 @@ export const createOrder = async (req: Request, res: Response) => {
   try {
     // 1. Find user
     const user = await prisma.user.findUnique({
-      where: { email: firebaseUser.email },
+      where: { email: firebaseUser.email as string },
       include: { cartItems: { include: { product: true } } }
     });
 
