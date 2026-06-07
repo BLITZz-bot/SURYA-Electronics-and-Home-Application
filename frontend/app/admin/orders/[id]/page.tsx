@@ -3,8 +3,8 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useCallback } from "react";
-import { useAuth } from "../../../context/auth-context";
-import { getApiUrl } from "../../../lib/api-utils";
+import { useAuth } from "../../../../context/auth-context";
+import { getApiUrl } from "../../../../lib/api-utils";
 
 interface PageProps {
   params: { id: string };
