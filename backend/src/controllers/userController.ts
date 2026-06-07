@@ -9,32 +9,33 @@ export const getProfile = async (req: Request, res: Response) => {
   }
 
   try {
-    // Check if user exists in our DB, if not create them
+    const email = firebaseUser.email.toLowerCase().trim();
+    const adminEmails = process.env.ADMIN_EMAILS?.split(',').map(e => e.trim().toLowerCase()) ?? [];
+    const shouldBeAdmin = adminEmails.includes(email);
+
+    // Find or create user
     let user = await prisma.user.findUnique({
-      where: { email: firebaseUser.email },
+      where: { email },
     });
 
     if (!user) {
-      // Check if this is the initial admin
-      const adminEmails = process.env.ADMIN_EMAILS?.split(',').map(e => e.trim().toLowerCase()) ?? [];
-      const role = adminEmails.includes(firebaseUser.email.toLowerCase()) ? 'admin' : 'customer';
-
       user = await prisma.user.create({
         data: {
-          email: firebaseUser.email,
+          email,
           name: firebaseUser.name || '',
           image: firebaseUser.picture || '',
-          role: role,
+          role: shouldBeAdmin ? 'admin' : 'customer',
         },
       });
+      console.log(`Created new user: ${email} with role: ${user.role}`);
     } else {
-      // Check if they should be promoted to admin based on ENV (Owner safeguard)
-      const adminEmails = process.env.ADMIN_EMAILS?.split(',').map(e => e.trim().toLowerCase()) ?? [];
-      if (user.role !== 'admin' && adminEmails.includes(user.email?.toLowerCase() || '')) {
+      // Force promote if email is in the list (Even if they existed before)
+      if (shouldBeAdmin && user.role !== 'admin') {
         user = await prisma.user.update({
           where: { id: user.id },
           data: { role: 'admin' },
         });
+        console.log(`Promoted user to admin: ${email}`);
       }
     }
 
