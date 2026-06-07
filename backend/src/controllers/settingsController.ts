@@ -8,13 +8,21 @@ export const getSettings = async (req: Request, res: Response) => {
     });
 
     if (!settings) {
+      console.log("No settings found, creating default...");
       settings = await prisma.storeSettings.create({
-        data: { id: "default" }
+        data: { 
+          id: "default",
+          storeName: "SURYA Electronics",
+          currency: "INR",
+          shippingFee: 0,
+          taxRate: 0
+        }
       });
     }
     res.json(settings);
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch settings' });
+  } catch (error: any) {
+    console.error('Settings fetch error:', error);
+    res.status(500).json({ error: 'Failed to fetch settings', details: error.message });
   }
 };
 
