@@ -45,7 +45,7 @@ export default async function AdminOrdersPage() {
 
                 <div className="flex flex-col gap-2 min-w-[200px]">
                   <p className="text-sm font-medium text-slate-500 uppercase tracking-wider">Update Status</p>
-                  <AdminOrderStatus orderId={order.id} currentStatus={order.status} onUpdate={() => {}} />
+                  <AdminOrderStatus orderId={order.id} currentStatus={order.status} />
                 </div>
                 
                 <div className="text-right">
