@@ -45,7 +45,7 @@ export default async function ProductsPage() {
                   />
                 </div>
                 <div className="p-6">
-                  <p className="text-xs uppercase tracking-[0.3em] text-slate-400">{product.category?.name || 'Electronics'}</p>
+                  <p className="text-xs uppercase tracking-[0.3em] text-slate-400">{(product as any).category?.name || 'Electronics'}</p>
                   <h2 className="mt-3 text-xl font-semibold text-slate-900">{product.name}</h2>
                   <p className="mt-3 text-sm text-slate-600 line-clamp-3">{product.description}</p>
                   <div className="mt-6 flex items-center justify-between text-slate-900">
