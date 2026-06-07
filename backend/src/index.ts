@@ -16,7 +16,7 @@ app.use(cors({
   origin: [
     'http://localhost:3000',
     'https://surya-electronics-and-home-applicat.vercel.app',
-    'https://surya-electronics-and-home-application.vercel.app'
+    'https://surya-electronics-and-home-application.onrender.com'
   ],
   credentials: true
 }));
