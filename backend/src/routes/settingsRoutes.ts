@@ -1,12 +1,16 @@
 import { Router } from 'express';
 import { 
   getSettings, 
-  updateSettings 
+  updateSettings,
+  getDashboardStats
 } from '../controllers/settingsController';
+import { verifyToken, isAdmin } from '../middleware/authMiddleware';
 
 const router = Router();
 
-router.get('/', getSettings);
-router.patch('/', updateSettings);
+// Admin-only routes
+router.get('/', verifyToken, isAdmin, getSettings);
+router.patch('/', verifyToken, isAdmin, updateSettings);
+router.get('/stats', verifyToken, isAdmin, getDashboardStats);
 
 export default router;

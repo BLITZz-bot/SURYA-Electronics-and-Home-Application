@@ -1,19 +1,15 @@
 import Link from "next/link";
-import { prisma } from "../../lib/prisma";
+import { getApiUrl } from "../../lib/api-utils";
 
 export const dynamic = "force-dynamic";
 
 export default async function ProductsPage() {
   let products: any[] = [];
   try {
-    products = await prisma.product.findMany({
-      orderBy: {
-        createdAt: "desc",
-      },
-      include: {
-        category: { select: { name: true } }
-      }
-    });
+    const res = await fetch(getApiUrl('/api/products'), { cache: 'no-store' });
+    if (res.ok) {
+      products = await res.json();
+    }
   } catch (error) {
     console.error("Products Page Error:", error);
   }
@@ -53,7 +49,7 @@ export default async function ProductsPage() {
                   <h2 className="mt-3 text-xl font-semibold text-slate-900">{product.name}</h2>
                   <p className="mt-3 text-sm text-slate-600 line-clamp-3">{product.description}</p>
                   <div className="mt-6 flex items-center justify-between text-slate-900">
-                    <p className="text-lg font-semibold">₹{Number(product.price).toFixed(0)}</p>
+                    <p className="text-lg font-semibold">₹{Number(product.price).toLocaleString()}</p>
                     <p className="text-sm text-slate-500">Stock: {product.stock}</p>
                   </div>
                 </div>

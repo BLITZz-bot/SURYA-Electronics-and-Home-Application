@@ -1,21 +1,17 @@
 import Link from "next/link";
-import { prisma } from "../lib/prisma";
-import { Product } from "@prisma/client";
+import { getApiUrl } from "../lib/api-utils";
 
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
   let products: any[] = [];
   try {
-    products = await prisma.product.findMany({
-      orderBy: {
-        createdAt: "desc",
-      },
-      take: 6,
-      include: {
-        category: { select: { name: true } }
-      }
-    });
+    const res = await fetch(getApiUrl('/api/products'), { cache: 'no-store' });
+    if (res.ok) {
+      const data = await res.json();
+      // Take only the first 6 for the home page
+      products = data.slice(0, 6);
+    }
   } catch (error) {
     console.error("Home Page Error fetching products:", error);
   }
@@ -69,7 +65,7 @@ export default async function HomePage() {
                     <h2 className="mt-3 text-xl font-semibold text-slate-900">{product.name}</h2>
                     <p className="mt-3 text-sm text-slate-600 line-clamp-2">{product.description}</p>
                     <div className="mt-6 flex items-center justify-between text-slate-900">
-                      <p className="text-lg font-semibold">₹{Number(product.price).toFixed(0)}</p>
+                      <p className="text-lg font-semibold">₹{Number(product.price).toLocaleString()}</p>
                       <p className="text-sm text-slate-500">Stock: {product.stock}</p>
                     </div>
                   </div>
