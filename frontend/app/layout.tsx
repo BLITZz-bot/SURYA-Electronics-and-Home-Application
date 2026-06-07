@@ -1,3 +1,5 @@
+'use dynamic';
+
 import "./globals.css";
 import { Providers } from "./providers";
 import { getServerSession } from "next-auth/next";

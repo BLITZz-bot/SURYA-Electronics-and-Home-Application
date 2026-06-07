@@ -1,3 +1,5 @@
+'use dynamic';
+
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "../../lib/auth";
 import Link from "next/link";
