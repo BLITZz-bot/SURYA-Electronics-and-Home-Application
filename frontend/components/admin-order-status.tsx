@@ -1,11 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 interface AdminOrderStatusProps {
   orderId: string;
   currentStatus: string;
-  onUpdate: () => void;
+  onUpdate?: () => void;
 }
 
 const statusOptions = ["pending", "shipped", "delivered", "cancelled"];
@@ -14,6 +15,7 @@ export default function AdminOrderStatus({ orderId, currentStatus, onUpdate }: A
   const [selectedStatus, setSelectedStatus] = useState(currentStatus);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const router = useRouter();
 
   async function updateStatus() {
     setLoading(true);
@@ -32,8 +34,9 @@ export default function AdminOrderStatus({ orderId, currentStatus, onUpdate }: A
       if (!response.ok) {
         setMessage(result.error ?? "Failed to update order status.");
       } else {
-        setMessage("Order status updated.");
-        onUpdate();
+        setMessage("Status updated.");
+        router.refresh();
+        if (onUpdate) onUpdate();
       }
     } catch (error) {
       setMessage("Unable to update order status.");
@@ -43,29 +46,27 @@ export default function AdminOrderStatus({ orderId, currentStatus, onUpdate }: A
   }
 
   return (
-    <div className="space-y-3 rounded-3xl border border-slate-200 bg-white p-4">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <select
-          value={selectedStatus}
-          onChange={(event) => setSelectedStatus(event.target.value)}
-          className="rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3"
-        >
-          {statusOptions.map((status) => (
-            <option key={status} value={status}>
-              {status}
-            </option>
-          ))}
-        </select>
-        <button
-          type="button"
-          onClick={updateStatus}
-          disabled={loading}
-          className="rounded-full bg-slate-900 px-5 py-3 text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:bg-slate-400"
-        >
-          {loading ? "Saving..." : "Update"}
-        </button>
-      </div>
-      {message ? <p className="text-sm text-slate-600">{message}</p> : null}
+    <div className="flex items-center gap-2">
+      <select
+        value={selectedStatus}
+        onChange={(event) => setSelectedStatus(event.target.value)}
+        className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 focus:border-sky-500 focus:outline-none transition-colors"
+      >
+        {statusOptions.map((status) => (
+          <option key={status} value={status}>
+            {status.toUpperCase()}
+          </option>
+        ))}
+      </select>
+      <button
+        type="button"
+        onClick={updateStatus}
+        disabled={loading || selectedStatus === currentStatus}
+        className="rounded-full bg-slate-900 px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400"
+      >
+        {loading ? "..." : "Save"}
+      </button>
+      {message && <p className="text-[10px] font-bold text-emerald-600">{message}</p>}
     </div>
   );
 }

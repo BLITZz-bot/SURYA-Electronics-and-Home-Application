@@ -23,8 +23,7 @@ model Account {
   session_state      String?
   oauth_token_secret String?
   oauth_token        String?
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user               User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
 }
@@ -34,22 +33,21 @@ model Session {
   sessionToken String   @unique
   userId       String
   expires      DateTime
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model User {
-  id            String      @id @default(cuid())
+  id            String     @id @default(cuid())
   name          String?
-  email         String?     @unique
+  email         String?    @unique
   emailVerified DateTime?
   image         String?
-  role          String      @default("customer")
+  role          String     @default("customer")
   accounts      Account[]
-  sessions      Session[]
+  addresses     Address[]
   cartItems     CartItem[]
   orders        Order[]
-  addresses     Address[]
+  sessions      Session[]
 }
 
 model Product {
@@ -69,20 +67,19 @@ model Product {
 
 model CartItem {
   id        String   @id @default(cuid())
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId    String
-  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
   productId String
   quantity  Int      @default(1)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, productId])
 }
 
 model Order {
   id                 String      @id @default(cuid())
-  user               User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId             String
   totalAmount        Decimal
   status             String      @default("pending")
@@ -94,32 +91,33 @@ model Order {
   shippingPhone      String
   createdAt          DateTime    @default(now())
   updatedAt          DateTime    @updatedAt
+  user               User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   items              OrderItem[]
 }
 
 model OrderItem {
-  id        String   @id @default(cuid())
-  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  id        String  @id @default(cuid())
   orderId   String
-  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
   productId String
   quantity  Int
   price     Decimal
+  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 }
 
 model Address {
-  id          String   @id @default(cuid())
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId      String
-  label       String
-  line1       String
-  city        String
-  postalCode  String
-  country     String
-  phone       String
-  isDefault   Boolean  @default(false)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id         String   @id @default(cuid())
+  userId     String
+  label      String
+  line1      String
+  city       String
+  postalCode String
+  country    String
+  phone      String
+  isDefault  Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model VerificationToken {
