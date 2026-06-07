@@ -15,6 +15,8 @@ const defaultForm = {
   categoryId: "",
   brand: "",
   imageUrl: "",
+  offerTitle: "",
+  offerDescription: "",
 };
 
 interface AdminProductFormProps {
@@ -222,6 +224,30 @@ export default function AdminProductForm({ initialData, onSuccess, onCancel }: A
                   <option value="percentage">Percentage (%)</option>
                   <option value="fixed">Fixed Amount (₹)</option>
                 </select>
+              </label>
+           </div>
+        </div>
+
+        <div className="md:col-span-2 lg:col-span-3 border-t pt-4 mt-2">
+           <h3 className="text-sm font-black text-[#5DADE2] mb-4 uppercase tracking-widest">Promotional Content (Optional)</h3>
+           <div className="grid gap-4 md:grid-cols-2">
+              <label className="space-y-2 text-xs font-bold uppercase tracking-wider text-slate-500">
+                Offer Title
+                <input
+                  value={form.offerTitle}
+                  onChange={(event) => handleChange("offerTitle", event.target.value)}
+                  className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 focus:border-sky-500 focus:outline-none transition-colors"
+                  placeholder="e.g. Festival Sale, Summer Offer"
+                />
+              </label>
+              <label className="space-y-2 text-xs font-bold uppercase tracking-wider text-slate-500">
+                Offer Description
+                <input
+                  value={form.offerDescription}
+                  onChange={(event) => handleChange("offerDescription", event.target.value)}
+                  className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 focus:border-sky-500 focus:outline-none transition-colors"
+                  placeholder="e.g. Get additional 10% cashback on SBI cards"
+                />
               </label>
            </div>
         </div>

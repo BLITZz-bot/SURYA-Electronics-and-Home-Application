@@ -37,7 +37,6 @@ export default function AdminUserList({ initialUsers }: { initialUsers: any[] })
     } catch (error) {
       alert("An error occurred while updating the role.");
     } finally {
-      setLoadingId(userId);
       setLoadingId(null);
     }
   }

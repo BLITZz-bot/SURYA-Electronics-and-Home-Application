@@ -1,26 +1,87 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useAuth } from "../context/auth-context";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import AuthButton from "./auth-button";
+import { Search, ShoppingCart, MapPin, Menu, ChevronDown, User, Package, Bell, LayoutGrid, LogOut } from "lucide-react";
+import { cn } from "../lib/utils";
+import CategoryDrawer from "./category-drawer";
+import LocationModal from "./location-modal";
 
 export default function SiteHeader() {
-  const { user, isAdmin, token } = useAuth();
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { user, isAdmin, token, logout } = useAuth();
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [suggestions, setSuggestions] = useState<any[]>([]);
   const [cartCount, setCartCount] = useState(0);
   const [categories, setCategories] = useState<any[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState("All");
   const [defaultAddress, setDefaultAddress] = useState<any>(null);
+  const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
   const router = useRouter();
+  const pathname = usePathname();
+  const searchRef = useRef<HTMLDivElement>(null);
+
+  const handleAddressSelect = (address: any) => {
+    setDefaultAddress(address);
+  };
 
   useEffect(() => {
-    if (token) {
+    if (token && !pathname.startsWith("/admin")) {
       fetchCartCount();
       fetchDefaultAddress();
     }
-  }, [token]);
+  }, [token, pathname]);
+
+  useEffect(() => {
+    if (!pathname.startsWith("/admin")) {
+      fetchCategories();
+    }
+  }, [pathname]);
+
+  // Live Search Logic
+  useEffect(() => {
+    if (pathname.startsWith("/admin")) return;
+
+    const timer = setTimeout(async () => {
+      if (searchQuery.trim().length > 1) {
+        try {
+          const { getApiUrl } = await import("../lib/api-utils");
+          const res = await fetch(getApiUrl(`/api/products?search=${encodeURIComponent(searchQuery)}`));
+          if (res.ok) {
+            const data = await res.json();
+            setSuggestions(data.slice(0, 6));
+            setShowSuggestions(true);
+          }
+        } catch (err) {
+          console.error(err);
+        }
+      } else {
+        setSuggestions([]);
+        setShowSuggestions(false);
+      }
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery, pathname]);
+
+  // Click outside search
+  useEffect(() => {
+    if (pathname.startsWith("/admin")) return;
+
+    const handleClickOutside = (event: MouseEvent) => {
+      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+        setShowSuggestions(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [pathname]);
+
+  if (pathname.startsWith("/admin")) return null;
 
   async function fetchDefaultAddress() {
     try {
@@ -36,10 +97,6 @@ export default function SiteHeader() {
       console.error(err);
     }
   }
-
-  useEffect(() => {
-    fetchCategories();
-  }, []);
 
   async function fetchCategories() {
     try {
@@ -71,150 +128,179 @@ export default function SiteHeader() {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    if (searchQuery.trim()) {
-      router.push(`/products?search=${encodeURIComponent(searchQuery)}`);
+    if (searchQuery.trim() || selectedCategory !== "All") {
+      setShowSuggestions(false);
+      let url = `/products?search=${encodeURIComponent(searchQuery)}`;
+      if (selectedCategory !== "All") {
+        url += `&category=${encodeURIComponent(selectedCategory)}`;
+      }
+      router.push(url);
     }
   };
 
+  const handleSignOut = async () => {
+    await logout();
+    router.push("/");
+  };
+
   return (
-    <header className="sticky top-0 z-50 shadow-md">
-      {/* Main Header */}
+    <header className="sticky top-0 z-50 shadow-md font-sans">
+      <CategoryDrawer isOpen={isDrawerOpen} onClose={() => setIsDrawerOpen(false)} categories={categories} />
+      <LocationModal isOpen={isLocationModalOpen} onClose={() => setIsLocationModalOpen(false)} onAddressSelect={handleAddressSelect} />
+      
+      {/* Main Header - Single Row */}
       <div className="bg-[#0F3D6E] text-white">
-        <div className="mx-auto flex max-w-[1500px] items-center gap-4 px-4 py-2">
+        <div className="mx-auto max-w-[1500px] flex items-center gap-2 md:gap-4 px-4 h-14">
           {/* Logo */}
-          <Link href="/" className="flex items-center p-2 hover:outline outline-1 outline-white rounded-sm">
-            <span className="text-xl font-bold tracking-tight">SURYA</span>
-            <span className="text-amazon-orange text-xs font-bold mt-2 ml-1">Electronics</span>
+          <Link href="/" className="flex items-center group p-1 hover:outline outline-1 outline-white/20 rounded-sm shrink-0">
+            <span className="text-xl md:text-2xl font-black tracking-tighter italic">SURYA</span>
+            <span className="text-amazon-orange text-[9px] md:text-[10px] font-black uppercase mt-1.5 ml-1 tracking-widest group-hover:translate-x-0.5 transition-transform underline decoration-amazon-orange underline-offset-4">Electronics</span>
           </Link>
 
           {/* Location */}
-          <div className="hidden lg:flex flex-col p-2 hover:outline outline-1 outline-white rounded-sm cursor-pointer min-w-[120px]">
-            <span className="text-[11px] text-gray-300 leading-none">Deliver to {user?.displayName?.split(' ')[0] || 'User'}</span>
-            <div className="flex items-center">
-              <svg className="w-4 h-4 mr-0.5 text-amazon-yellow" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-              <span className="text-sm font-bold truncate max-w-[100px]">
+          <div 
+            onClick={() => setIsLocationModalOpen(true)}
+            className="hidden sm:flex flex-col px-2 py-1 hover:outline outline-1 outline-white/20 rounded-sm cursor-pointer min-w-[120px] shrink-0 transition-all"
+          >
+            <span className="text-[10px] text-blue-200 font-bold leading-none">Deliver to {user?.displayName?.split(' ')[0] || 'Guest'}</span>
+            <div className="flex items-center mt-0.5">
+              <MapPin size={12} className="mr-1 text-amazon-orange" />
+              <span className="text-xs font-black truncate max-w-[90px]">
                 {defaultAddress ? `${defaultAddress.city}` : 'Select Location'}
               </span>
             </div>
           </div>
 
-          {/* Search Bar */}
-          <form onSubmit={handleSearch} className="flex flex-1 h-10 group">
-            <select className="hidden md:block bg-gray-100 text-gray-700 text-xs px-2 rounded-l-md border-r border-gray-300 focus:outline-none focus:ring-2 focus:ring-amazon-orange">
-              <option>All</option>
-              {categories.map(cat => (
-                <option key={cat.id} value={cat.name}>{cat.name}</option>
-              ))}
-            </select>
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="flex-1 px-4 py-2 text-black text-sm focus:outline-none"
-              placeholder="Search SURYA Electronics"
-            />
-            <button 
-              type="submit"
-              className="bg-amazon-orange hover:bg-orange-500 p-2 rounded-r-md transition-colors"
-            >
-              <svg className="w-6 h-6 text-amazon-dark" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
-            </button>
-          </form>
+          {/* Search Bar Group */}
+          <div className="flex-1 relative h-10 group" ref={searchRef}>
+            <form onSubmit={handleSearch} className="flex h-full bg-white rounded-lg overflow-hidden shadow-sm">
+              <div className="hidden md:flex items-center bg-gray-100 text-gray-500 px-3 border-r border-gray-200 relative">
+                <select 
+                  value={selectedCategory}
+                  onChange={(e) => {
+                    const cat = e.target.value;
+                    setSelectedCategory(cat);
+                    if (cat !== "All") {
+                      router.push(`/products?category=${encodeURIComponent(cat)}`);
+                    } else {
+                      router.push('/products');
+                    }
+                  }}
+                  className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                >
+                  <option value="All">All Departments</option>
+                  {categories.map(cat => (
+                    <option key={cat.id} value={cat.name}>{cat.name}</option>
+                  ))}
+                </select>
+                <span className="text-[10px] font-black uppercase tracking-widest pointer-events-none">{selectedCategory === 'All' ? 'All' : selectedCategory}</span>
+                <ChevronDown size={12} className="ml-1.5 pointer-events-none" />
+              </div>
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onFocus={() => searchQuery.length > 1 && setShowSuggestions(true)}
+                className="flex-1 px-4 py-2 text-black text-sm font-medium focus:outline-none placeholder-gray-400"
+                placeholder="Search premium electronics..."
+              />
+              <button 
+                type="submit"
+                className="bg-amazon-orange hover:bg-orange-500 px-5 transition-all flex items-center justify-center active:scale-95"
+              >
+                <Search size={20} className="text-[#0F3D6E]" strokeWidth={3} />
+              </button>
+            </form>
+
+            {/* Live Search Suggestions */}
+            {showSuggestions && suggestions.length > 0 && (
+              <div className="absolute top-full left-0 right-0 bg-white shadow-2xl rounded-b-xl mt-1 overflow-hidden border border-gray-100 animate-in fade-in slide-in-from-top-2 z-[110]">
+                 <div className="p-2.5 bg-gray-50 border-b border-gray-100 flex items-center justify-between">
+                    <span className="text-[9px] font-black uppercase text-gray-400 tracking-widest">Top Matches</span>
+                    <Search size={10} className="text-gray-300" />
+                 </div>
+                 {suggestions.map((p) => (
+                   <Link 
+                    key={p.id} 
+                    href={`/products/${p.id}`}
+                    onClick={() => setShowSuggestions(false)}
+                    className="flex items-center gap-3 p-3 hover:bg-blue-50 transition-colors border-b border-gray-50 last:border-none"
+                   >
+                      <img src={p.imageUrl} alt="" className="w-8 h-8 object-contain bg-white rounded p-0.5 border border-gray-100" />
+                      <div className="min-w-0">
+                        <p className="text-xs font-bold text-gray-900 truncate">{p.name}</p>
+                        <p className="text-[9px] font-black text-[#5DADE2] uppercase tracking-tighter">₹{Number(p.price).toLocaleString()}</p>
+                      </div>
+                   </Link>
+                 ))}
+              </div>
+            )}
+          </div>
 
           {/* Right Actions */}
-          <div className="flex items-center gap-1">
-            <Link href={user ? "/account" : "/auth/signin"} className="hidden sm:flex flex-col p-2 hover:outline outline-1 outline-white rounded-sm">
-              <span className="text-[11px] leading-none">Hello, {user?.displayName || (user?.email ? user.email.split('@')[0] : 'Sign in')}</span>
-              <span className="text-sm font-bold">Account & Lists</span>
+          <div className="flex items-center gap-1 md:gap-3 shrink-0">
+            <Link href={user ? "/account" : "/auth/signin"} className="hidden md:flex flex-col px-2 py-1 hover:outline outline-1 outline-white/20 rounded-sm group transition-all">
+              <span className="text-[10px] text-blue-200 font-bold leading-none">Hello, {user?.displayName?.split(' ')[0] || 'Sign in'}</span>
+              <div className="flex items-center mt-0.5">
+                 <span className="text-xs font-black tracking-tight group-hover:text-amazon-orange">Account</span>
+                 <ChevronDown size={12} className="ml-0.5 text-blue-300" />
+              </div>
             </Link>
 
-            <Link href="/orders" className="hidden sm:flex flex-col p-2 hover:outline outline-1 outline-white rounded-sm">
-              <span className="text-[11px] leading-none">Returns</span>
-              <span className="text-sm font-bold">& Orders</span>
+            <Link href="/orders" className="hidden lg:flex flex-col px-2 py-1 hover:outline outline-1 outline-white/20 rounded-sm group transition-all">
+              <span className="text-[10px] text-blue-200 font-bold leading-none">Returns</span>
+              <span className="text-xs font-black tracking-tight mt-0.5 group-hover:text-amazon-orange">& Orders</span>
             </Link>
 
-            <Link href="/cart" className="flex items-end p-2 hover:outline outline-1 outline-white rounded-sm relative">
+            <Link href="/cart" className="flex items-end px-2 py-1 hover:outline outline-1 outline-white/20 rounded-sm relative group transition-all">
               <div className="relative">
-                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
-                <span className="absolute -top-1 left-4 bg-amazon-dark text-amazon-orange text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center border border-amazon-orange">
+                <ShoppingCart size={24} className="text-white group-hover:text-amazon-orange transition-colors" />
+                <span className="absolute -top-1.5 -right-1.5 bg-amazon-orange text-[#0F3D6E] text-[9px] font-black rounded-full h-4.5 w-4.5 flex items-center justify-center border-2 border-[#0F3D6E]">
                   {cartCount}
                 </span>
               </div>
-              <span className="text-sm font-bold hidden md:block ml-1">Cart</span>
+              <span className="text-xs font-black hidden xl:block ml-1 group-hover:text-amazon-orange uppercase tracking-widest">Cart</span>
             </Link>
 
             {isAdmin && (
-              <Link href="/admin" className="hidden lg:flex flex-col p-2 hover:outline outline-1 outline-white rounded-sm text-amazon-yellow">
-                <span className="text-[11px] leading-none">Admin</span>
-                <span className="text-sm font-bold">Portal</span>
+              <Link href="/admin" className="flex items-center gap-1.5 px-3 py-1.5 bg-white/10 hover:bg-amazon-orange hover:text-[#0F3D6E] rounded-lg transition-all group shrink-0">
+                <LayoutGrid size={16} />
+                <span className="text-[10px] font-black uppercase tracking-widest">Admin</span>
               </Link>
             )}
 
-            <div className="md:hidden">
-               <button 
-                onClick={() => setIsMenuOpen(!isMenuOpen)}
-                className="p-2 text-white"
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" /></svg>
-              </button>
-            </div>
+            <button 
+              onClick={() => setIsDrawerOpen(true)}
+              className="md:hidden p-2 text-white hover:text-amazon-orange transition-colors"
+            >
+              <Menu size={24} />
+            </button>
           </div>
         </div>
       </div>
 
       {/* Secondary Nav */}
-      <div className="bg-[#5DADE2] text-white overflow-x-auto whitespace-nowrap scrollbar-hide">
-        <div className="mx-auto flex max-w-[1500px] items-center px-4 h-10 gap-4 text-sm font-medium">
-          <button className="flex items-center gap-1 p-2 hover:outline outline-1 outline-white rounded-sm">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" /></svg>
+      <div className="bg-[#5DADE2] text-white h-10 flex items-center">
+        <div className="mx-auto max-w-[1500px] w-full px-4 flex items-center">
+          <button 
+            onClick={() => setIsDrawerOpen(true)}
+            className="flex items-center gap-1.5 px-2 py-1 hover:outline outline-1 outline-white/20 rounded-sm font-black text-xs uppercase tracking-widest transition-all"
+          >
+            <Menu size={18} />
             All
           </button>
-          {categories.slice(0, 6).map(cat => (
-            <Link key={cat.id} href={`/products?category=${cat.name}`} className="p-2 hover:outline outline-1 outline-white rounded-sm">
-              {cat.name}
-            </Link>
-          ))}
-          <div className="flex-1"></div>
+          
           {token && (
-            <button onClick={() => import("../lib/firebase").then(m => m.auth.signOut())} className="p-2 hover:outline outline-1 outline-white rounded-sm text-xs">
+            <button 
+              onClick={handleSignOut} 
+              className="px-2 py-1 hover:bg-rose-500 rounded-md transition-all text-[9px] font-black tracking-widest flex items-center gap-1.5 ml-auto"
+            >
+              <LogOut size={12} />
               Sign Out
             </button>
           )}
         </div>
       </div>
-
-      {/* Mobile Menu Overlay */}
-      {isMenuOpen && (
-        <div className="fixed inset-0 z-[60] flex">
-          <div className="w-[80%] max-w-[350px] bg-white h-full shadow-2xl animate-in slide-in-from-left duration-300">
-            <div className="bg-[#0F3D6E] text-white p-4 flex items-center gap-3">
-              <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" /></svg>
-              <span className="text-lg font-bold">Hello, {user?.displayName || 'Sign in'}</span>
-            </div>
-            <nav className="p-4 space-y-6">
-              <section>
-                <h3 className="text-lg font-bold mb-2">Shop By Category</h3>
-                <ul className="space-y-4 text-sm text-gray-700">
-                  <li><Link href="/products" onClick={() => setIsMenuOpen(false)}>All Electronics</Link></li>
-                  {categories.map(cat => (
-                    <li key={cat.id}><Link href={`/products?category=${cat.name}`} onClick={() => setIsMenuOpen(false)}>{cat.name}</Link></li>
-                  ))}
-                </ul>
-              </section>
-              <section className="pt-6 border-t border-gray-100">
-                <h3 className="text-lg font-bold mb-2">Help & Settings</h3>
-                <ul className="space-y-4 text-sm text-gray-700">
-                  <li><Link href="/account" onClick={() => setIsMenuOpen(false)}>Your Account</Link></li>
-                  <li><Link href="/orders" onClick={() => setIsMenuOpen(false)}>Your Orders</Link></li>
-                  {isAdmin && <li><Link href="/admin" onClick={() => setIsMenuOpen(false)} className="text-blue-600">Admin Panel</Link></li>}
-                  <li><AuthButton /></li>
-                </ul>
-              </section>
-            </nav>
-          </div>
-          <div className="flex-1 bg-black/60" onClick={() => setIsMenuOpen(false)}></div>
-        </div>
-      )}
     </header>
   );
 }

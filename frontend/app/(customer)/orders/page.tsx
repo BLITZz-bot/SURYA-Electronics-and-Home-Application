@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useAuth } from "../../context/auth-context";
+import { useAuth } from "../../../context/auth-context";
 import { useEffect, useState, useCallback } from "react";
-import { getApiUrl } from "../../lib/api-utils";
+import { getApiUrl } from "../../../lib/api-utils";
 
 export default function OrdersPage() {
   const { user, loading, token } = useAuth();

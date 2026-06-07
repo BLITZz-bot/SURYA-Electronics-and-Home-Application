@@ -2,8 +2,8 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { useAuth } from "../../context/auth-context";
-import { getApiUrl } from "../../lib/api-utils";
+import { useAuth } from "../../../context/auth-context";
+import { getApiUrl } from "../../../lib/api-utils";
 import Link from "next/link";
 
 interface CartItem {

@@ -2,8 +2,8 @@
 
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
-import { useAuth } from "../../context/auth-context";
-import { getApiUrl } from "../../lib/api-utils";
+import { useAuth } from "../../../context/auth-context";
+import { getApiUrl } from "../../../lib/api-utils";
 
 interface CartItem {
   id: string;
@@ -161,7 +161,7 @@ export default function CartPage() {
 
                  <Link
                   href="/checkout"
-                  className="block w-full text-center bg-surya-light hover:bg-surya-dark text-white py-2.5 rounded-full text-sm font-bold shadow-md transition-all active:scale-95"
+                  className="block w-full text-center bg-[#0F3D6E] hover:bg-black text-white py-3 rounded-full text-sm font-black shadow-xl shadow-[#0F3D6E]/20 transition-all transform active:scale-95 uppercase tracking-widest"
                 >
                   Proceed to Buy
                 </Link>

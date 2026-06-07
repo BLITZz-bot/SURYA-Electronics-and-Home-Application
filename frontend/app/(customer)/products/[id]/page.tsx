@@ -1,11 +1,12 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import AddToCartForm from "../../../components/add-to-cart-form";
-import ProductMobileStickyBar from "../../../components/product-mobile-sticky-bar";
-import ProductImageGallery from "../../../components/product-image-gallery";
-import ProductCard from "../../../components/product-card";
-import ReviewSection from "../../../components/review-section";
-import { getApiUrl } from "../../../lib/api-utils";
+import { Ticket } from "lucide-react";
+import AddToCartForm from "../../../../components/add-to-cart-form";
+import ProductMobileStickyBar from "../../../../components/product-mobile-sticky-bar";
+import ProductImageGallery from "../../../../components/product-image-gallery";
+import ProductCard from "../../../../components/product-card";
+import ReviewSection from "../../../../components/review-section";
+import { getApiUrl } from "../../../../lib/api-utils";
 
 export const dynamic = "force-dynamic";
 
@@ -112,7 +113,18 @@ export default async function ProductPage({ params }: ProductPageProps) {
               <p className="text-xs text-gray-700 font-medium">Inclusive of all taxes</p>
             </div>
 
-            {/* Real Offers Section */}
+            {/* Product-Specific Offer Section */}
+            {product.offerTitle && (
+              <div className="bg-[#0F3D6E]/5 border-2 border-dashed border-[#0F3D6E]/20 p-6 rounded-[32px] animate-in zoom-in duration-500">
+                 <div className="flex items-center gap-2 mb-2 text-[#0F3D6E]">
+                    <Ticket size={20} className="text-amazon-orange" />
+                    <span className="text-sm font-black uppercase tracking-[0.2em]">{product.offerTitle}</span>
+                 </div>
+                 <p className="text-sm font-bold text-gray-700 leading-relaxed">{product.offerDescription}</p>
+              </div>
+            )}
+
+            {/* Global Active Offers Section */}
             {activeOffers.length > 0 && (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 py-6 border-y border-gray-100">
                  {activeOffers.map(offer => (

@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { motion } from "framer-motion";
+import { Star, ShoppingCart, ArrowRight } from "lucide-react";
 
 interface ProductCardProps {
   product: any;
@@ -11,60 +13,74 @@ export default function ProductCard({ product }: ProductCardProps) {
   const [imgSrc, setImgSrc] = useState(product.imageUrl || "/placeholder-product.png");
 
   return (
-    <Link
-      href={`/products/${product.id}`}
-      className="group flex flex-col bg-white transition p-4 hover:shadow-lg border border-transparent hover:border-gray-200 h-full"
+    <motion.div
+      whileHover={{ y: -8 }}
+      transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+      className="h-full"
     >
-      <div className="h-48 overflow-hidden bg-white mb-4 flex items-center justify-center p-2">
-        <img
-          src={imgSrc}
-          alt={product.name}
-          className="max-h-full max-w-full object-contain transition duration-300 group-hover:scale-105"
-          loading="lazy"
-          onError={() => setImgSrc("/placeholder-product.png")}
-        />
-      </div>
-      <div className="flex flex-col flex-1">
-        <h3 className="text-sm font-bold text-[#0F3D6E] line-clamp-2 group-hover:text-orange-700 transition-colors h-10 leading-tight">
-          {product.name}
-        </h3>
-        <div className="mt-1 flex items-center gap-1 min-h-[16px]">
-           {product.totalReviews > 0 ? (
-             <>
-               <div className="flex text-amazon-orange">
-                 {[...Array(5)].map((_, i) => (
-                   <svg key={i} className={`w-3 h-3 fill-current ${i < Math.round(product.avgRating) ? '' : 'text-gray-200'}`} viewBox="0 0 20 20">
-                     <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                   </svg>
-                 ))}
-               </div>
-               <span className="text-xs text-[#5DADE2] font-bold">{product.totalReviews}</span>
-             </>
-           ) : (
-             <span className="text-[10px] text-gray-300 font-bold italic uppercase tracking-tighter">No reviews yet</span>
-           )}
-        </div>
-        <div className="mt-2 min-h-[48px]">
-          <div className="flex items-baseline gap-1">
-            <span className="text-xs font-bold self-start mt-1">₹</span>
-            <span className="text-2xl font-black text-gray-900">{Number(product.price).toLocaleString()}</span>
-          </div>
+      <Link
+        href={`/products/${product.id}`}
+        className="group flex flex-col bg-white transition-all p-6 rounded-[32px] border border-gray-100 hover:border-[#0F3D6E]/10 hover:shadow-[0_24px_48px_-12px_rgba(15,61,110,0.12)] h-full relative overflow-hidden"
+      >
+        <div className="h-56 overflow-hidden bg-gray-50/50 rounded-2xl mb-6 flex items-center justify-center p-4 relative group-hover:bg-white transition-colors duration-500">
+          <img
+            src={imgSrc}
+            alt={product.name}
+            className="max-h-full max-w-full object-contain transition-transform duration-700 ease-out group-hover:scale-110"
+            loading="lazy"
+            onError={() => setImgSrc("/placeholder-product.png")}
+          />
+          {/* Discount Badge */}
           {product.originalPrice && Number(product.originalPrice) > Number(product.price) && (
-            <p className="text-xs text-gray-400 line-through">₹{Number(product.originalPrice).toLocaleString()}</p>
+            <div className="absolute top-4 left-4 bg-rose-600 text-white text-[10px] font-black px-2.5 py-1 rounded-full uppercase tracking-tighter shadow-lg">
+               {Math.round(((Number(product.originalPrice) - Number(product.price)) / Number(product.originalPrice)) * 100)}% OFF
+            </div>
           )}
         </div>
-        
-        {product.originalPrice && Number(product.originalPrice) > Number(product.price) && (
-          <div className="mt-2 flex items-center gap-2">
-             <span className="bg-rose-600 text-white text-[10px] font-black px-2 py-0.5 rounded-sm uppercase tracking-tighter">
-                {Math.round(((Number(product.originalPrice) - Number(product.price)) / Number(product.originalPrice)) * 100)}% Off
-             </span>
+
+        <div className="flex flex-col flex-1 space-y-3">
+          <div className="space-y-1">
+             <p className="text-[10px] font-black uppercase text-[#5DADE2] tracking-widest">{product.brand}</p>
+             <h3 className="text-sm font-black text-gray-900 line-clamp-2 leading-snug group-hover:text-[#0F3D6E] transition-colors">
+               {product.name}
+             </h3>
           </div>
-        )}
-        
-        <p className="mt-auto pt-4 text-[10px] text-emerald-600 font-black uppercase tracking-widest">In Stock</p>
-        <p className="text-[10px] text-gray-400 font-bold">Standard Shipping Eligible</p>
-      </div>
-    </Link>
+
+          <div className="flex items-center gap-2">
+             {product.totalReviews > 0 ? (
+               <div className="flex items-center gap-1.5">
+                  <div className="flex items-center gap-0.5 text-amazon-orange">
+                     <Star size={12} fill="currentColor" />
+                     <span className="text-xs font-black text-gray-900">{product.avgRating.toFixed(1)}</span>
+                  </div>
+                  <span className="text-[10px] text-gray-400 font-bold uppercase tracking-tighter">({product.totalReviews})</span>
+               </div>
+             ) : (
+               <span className="text-[10px] text-gray-300 font-bold italic uppercase tracking-tighter">New Arrival</span>
+             )}
+          </div>
+
+          <div className="pt-2 mt-auto border-t border-gray-50">
+            <div className="flex items-baseline gap-1">
+              <span className="text-sm font-black text-[#0F3D6E]">₹</span>
+              <span className="text-xl font-black text-[#0F3D6E] tracking-tight">{Number(product.price).toLocaleString()}</span>
+            </div>
+            {product.originalPrice && Number(product.originalPrice) > Number(product.price) && (
+              <p className="text-[10px] text-gray-400 line-through font-bold">₹{Number(product.originalPrice).toLocaleString()}</p>
+            )}
+          </div>
+          
+          <div className="flex items-center justify-between pt-2">
+             <span className="text-[10px] font-black text-emerald-600 uppercase tracking-widest flex items-center gap-1">
+                <div className="w-1 h-1 bg-emerald-600 rounded-full animate-pulse" />
+                In Stock
+             </span>
+             <div className="p-2 bg-gray-50 rounded-xl group-hover:bg-[#0F3D6E] group-hover:text-white transition-all">
+                <ArrowRight size={14} />
+             </div>
+          </div>
+        </div>
+      </Link>
+    </motion.div>
   );
 }

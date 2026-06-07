@@ -1,10 +1,10 @@
 "use client";
 
-import { useAuth } from "../../context/auth-context";
+import { useAuth } from "../../../context/auth-context";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useEffect, useState, useCallback } from "react";
-import { getApiUrl } from "../../lib/api-utils";
+import { getApiUrl } from "../../../lib/api-utils";
 
 export default function AccountPage() {
   const { user, dbUser, loading, logout, token } = useAuth();
@@ -76,6 +76,20 @@ export default function AccountPage() {
       }
     } catch (err) {
       console.error("Failed to delete address:", err);
+    }
+  };
+
+  const handleSetDefault = async (id: string) => {
+    try {
+      const res = await fetch(getApiUrl(`/api/addresses/${id}/default`), {
+        method: "PATCH",
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        setAddresses(addresses.map(a => ({ ...a, isDefault: a.id === id })));
+      }
+    } catch (err) {
+      console.error("Failed to set default address:", err);
     }
   };
 
@@ -309,6 +323,15 @@ export default function AccountPage() {
                            </p>
                         </div>
                         <div className="flex gap-4">
+                           {!addr.isDefault && (
+                              <button 
+                                onClick={() => handleSetDefault(addr.id)}
+                                className="p-3 bg-white border border-gray-200 rounded-2xl hover:bg-[#0F3D6E]/5 hover:border-[#0F3D6E] text-gray-400 hover:text-[#0F3D6E] transition-all shadow-sm group/btn"
+                                title="Set as Default"
+                              >
+                                 <CheckCircle2 size={20} className="group-hover/btn:scale-110 transition-transform" />
+                              </button>
+                           )}
                            <button className="p-3 bg-white border border-gray-200 rounded-2xl hover:bg-white hover:border-[#0F3D6E] text-gray-400 hover:text-[#0F3D6E] transition-all shadow-sm">
                               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
                            </button>

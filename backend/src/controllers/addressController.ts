@@ -73,3 +73,75 @@ export const deleteAddress = async (req: Request, res: Response) => {
     res.status(500).json({ error: 'Failed to delete address' });
   }
 };
+
+export const updateAddress = async (req: Request, res: Response) => {
+  const firebaseUser = (req as any).user;
+  const { id } = req.params;
+  const { 
+    name, phone, houseNumber, street, area, city, 
+    district, state, country, postalCode, latitude, longitude, isDefault 
+  } = req.body;
+
+  try {
+    const user = await prisma.user.findUnique({ where: { email: firebaseUser.email } });
+    const existing = await prisma.address.findUnique({ where: { id } });
+    
+    if (!existing || existing.userId !== user?.id) {
+      return res.status(403).json({ error: 'Unauthorized' });
+    }
+
+    if (isDefault) {
+      await prisma.address.updateMany({
+        where: { userId: user.id },
+        data: { isDefault: false }
+      });
+    }
+
+    const address = await prisma.address.update({
+      where: { id },
+      data: {
+        name,
+        phone,
+        houseNumber,
+        street,
+        area,
+        city,
+        district,
+        state,
+        country,
+        postalCode,
+        latitude: latitude ? parseFloat(latitude) : null,
+        longitude: longitude ? parseFloat(longitude) : null,
+        isDefault: isDefault || false
+      }
+    });
+    res.json(address);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to update address' });
+  }
+};
+
+export const setDefaultAddress = async (req: Request, res: Response) => {
+  const firebaseUser = (req as any).user;
+  const { id } = req.params;
+
+  try {
+    const user = await prisma.user.findUnique({ where: { email: firebaseUser.email } });
+    if (!user) return res.status(404).json({ error: 'User not found' });
+
+    await prisma.$transaction([
+      prisma.address.updateMany({
+        where: { userId: user.id },
+        data: { isDefault: false }
+      }),
+      prisma.address.update({
+        where: { id, userId: user.id },
+        data: { isDefault: true }
+      })
+    ]);
+
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to set default address' });
+  }
+};

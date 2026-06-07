@@ -20,14 +20,37 @@ export const addToCart = async (req: Request, res: Response) => {
   const firebaseUser = (req as any).user;
   const { productId, quantity } = req.body;
 
+  if (!productId || !quantity) {
+    return res.status(400).json({ error: 'Product ID and quantity are required' });
+  }
+
   try {
-    // Find the user in our DB
-    const user = await prisma.user.findUnique({
+    // 1. Find or sync user
+    let user = await prisma.user.findUnique({
       where: { email: firebaseUser.email }
     });
 
-    if (!user) return res.status(404).json({ error: 'User not found' });
+    if (!user) {
+      console.log('User not found in cart controller, syncing from firebase user:', firebaseUser.email);
+      const adminEmails = process.env.ADMIN_EMAILS?.split(',').map(e => e.trim().toLowerCase()) ?? [];
+      const email = firebaseUser.email.toLowerCase();
+      user = await prisma.user.create({
+        data: {
+          email,
+          name: firebaseUser.name || '',
+          image: firebaseUser.picture || '',
+          role: adminEmails.includes(email) ? 'admin' : 'customer',
+        },
+      });
+    }
 
+    // 2. Check if product exists
+    const product = await prisma.product.findUnique({ where: { id: productId } });
+    if (!product) {
+      return res.status(404).json({ error: 'Product not found' });
+    }
+
+    // 3. Upsert cart item
     const cartItem = await prisma.cartItem.upsert({
       where: {
         userId_productId: {
@@ -45,10 +68,11 @@ export const addToCart = async (req: Request, res: Response) => {
       }
     });
 
+    console.log(`Success: Added ${quantity} of ${productId} to cart for user ${user.id}`);
     res.json(cartItem);
-  } catch (error) {
-    console.error('Add to cart error:', error);
-    res.status(500).json({ error: 'Failed to add to cart' });
+  } catch (error: any) {
+    console.error('CRITICAL: Add to cart failed:', error.message);
+    res.status(500).json({ error: 'Internal server error adding to cart', details: error.message });
   }
 };
 

@@ -7,20 +7,32 @@ export const getProducts = async (req: Request, res: Response) => {
       include: { 
         category: true,
         _count: { select: { reviews: true } },
-        reviews: { select: { rating: true } }
+        reviews: { select: { rating: true } },
+        orderItems: {
+          where: { order: { status: 'delivered' } },
+          select: { quantity: true }
+        }
       },
       orderBy: { createdAt: 'desc' }
     });
 
-    // Calculate average ratings in memory for list view
-    const productsWithRatings = products.map(p => {
+    // Calculate ratings and sales in memory
+    const productsWithStats = products.map(p => {
       const avgRating = p.reviews.length > 0 
         ? p.reviews.reduce((sum, r) => sum + r.rating, 0) / p.reviews.length 
         : 0;
-      return { ...p, avgRating, totalReviews: p._count.reviews };
+      
+      const salesCount = p.orderItems.reduce((sum, item) => sum + item.quantity, 0);
+
+      return { 
+        ...p, 
+        avgRating, 
+        totalReviews: p._count.reviews,
+        salesCount
+      };
     });
 
-    res.json(productsWithRatings);
+    res.json(productsWithStats);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch products' });
   }
@@ -28,7 +40,7 @@ export const getProducts = async (req: Request, res: Response) => {
 
 export const createProduct = async (req: Request, res: Response) => {
   try {
-    const { name, description, categoryId, brand, price, originalPrice, discountValue, discountType, stock, imageUrl } = req.body;
+    const { name, description, categoryId, brand, price, originalPrice, discountValue, discountType, stock, imageUrl, offerTitle, offerDescription } = req.body;
     const product = await prisma.product.create({
       data: {
         name,
@@ -41,6 +53,8 @@ export const createProduct = async (req: Request, res: Response) => {
         discountType: discountType || null,
         stock: parseInt(stock),
         imageUrl,
+        offerTitle,
+        offerDescription
       },
     });
     res.status(201).json(product);
@@ -90,7 +104,7 @@ export const getProductById = async (req: Request, res: Response) => {
 export const updateProduct = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { name, description, categoryId, brand, price, originalPrice, discountValue, discountType, stock, imageUrl } = req.body;
+    const { name, description, categoryId, brand, price, originalPrice, discountValue, discountType, stock, imageUrl, offerTitle, offerDescription } = req.body;
     const product = await prisma.product.update({
       where: { id: id as string },
       data: {
@@ -104,6 +118,8 @@ export const updateProduct = async (req: Request, res: Response) => {
         discountType: discountType || null,
         stock: parseInt(stock),
         imageUrl,
+        offerTitle,
+        offerDescription
       },
     });
     res.json(product);

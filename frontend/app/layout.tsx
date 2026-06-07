@@ -1,8 +1,5 @@
-'use dynamic';
-
 import "./globals.css";
 import { Providers } from "./providers";
-import SiteHeader from "../components/site-header";
 
 export const metadata = {
   title: "SURYA Electronics",
@@ -12,10 +9,9 @@ export const metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body>
+      <body className="flex flex-col min-h-screen">
         <Providers>
-          <SiteHeader />
-          <div className="min-h-[calc(100vh-104px)]">{children}</div>
+          {children}
         </Providers>
       </body>
     </html>

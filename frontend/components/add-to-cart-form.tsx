@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../context/auth-context";
 import { getApiUrl } from "../lib/api-utils";
@@ -19,21 +19,25 @@ export default function AddToCartForm({ productId, availableStock, price }: AddT
   const [loading, setLoading] = useState(false);
   const [defaultCity, setDefaultCity] = useState<string | null>(null);
 
-  useState(() => {
+  useEffect(() => {
     if (token) {
-      import("../lib/api-utils").then(m => {
-        fetch(m.getApiUrl("/api/addresses"), {
-          headers: { Authorization: `Bearer ${token}` }
-        })
-        .then(res => res.json())
-        .then(data => {
-          const def = data.find((a: any) => a.isDefault) || data[0];
-          if (def) setDefaultCity(def.city);
-        })
-        .catch(console.error);
-      });
+      const fetchAddress = async () => {
+        try {
+          const res = await fetch(getApiUrl("/api/addresses"), {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          if (res.ok) {
+            const data = await res.json();
+            const def = data.find((a: any) => a.isDefault) || data[0];
+            if (def) setDefaultCity(def.city);
+          }
+        } catch (err) {
+          console.error("Failed to fetch address in cart form:", err);
+        }
+      };
+      fetchAddress();
     }
-  });
+  }, [token]);
 
   async function handleAddToCart(isBuyNow = false) {
     if (!user || !token) {
@@ -45,6 +49,7 @@ export default function AddToCartForm({ productId, availableStock, price }: AddT
     setMessage(null);
 
     try {
+      console.log("Attempting to add to cart:", { productId, quantity });
       const response = await fetch(getApiUrl("/api/cart"), {
         method: "POST",
         headers: {
@@ -54,8 +59,11 @@ export default function AddToCartForm({ productId, availableStock, price }: AddT
         body: JSON.stringify({ productId, quantity }),
       });
 
+      console.log("Add to cart response status:", response.status);
+      
       const result = await response.json();
       if (!response.ok) {
+        console.error("Add to cart failed logic:", result);
         setMessage(result.error ?? "Could not add item to cart.");
       } else {
         if (isBuyNow) {
@@ -65,6 +73,7 @@ export default function AddToCartForm({ productId, availableStock, price }: AddT
         }
       }
     } catch (error) {
+      console.error("Add to cart catch error:", error);
       setMessage("Failed to add item to cart. Please try again.");
     } finally {
       setLoading(false);

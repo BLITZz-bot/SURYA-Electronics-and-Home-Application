@@ -4,7 +4,7 @@
 
 @layer base {
   body {
-    @apply bg-amazon-bg text-slate-900;
+    @apply bg-amazon-bg text-slate-900 overflow-x-hidden;
     font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   }
 }
