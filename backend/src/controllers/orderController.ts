@@ -16,6 +16,28 @@ export const getOrders = async (req: Request, res: Response) => {
   }
 };
 
+export const getMyOrders = async (req: Request, res: Response) => {
+  const firebaseUser = (req as any).user;
+  if (!firebaseUser || !firebaseUser.email) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  try {
+    const orders = await prisma.order.findMany({
+      where: {
+        user: { email: firebaseUser.email }
+      },
+      orderBy: { createdAt: 'desc' },
+      include: {
+        items: { include: { product: true } }
+      }
+    });
+    res.json(orders);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch your orders' });
+  }
+};
+
 export const getOrderById = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
