@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { getApiUrl } from '../../../lib/api-utils';
+import { useAuth } from '../../../context/auth-context';
 
 export default function SettingsPage() {
   const router = useRouter();
@@ -11,14 +12,19 @@ export default function SettingsPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const { token, isAdmin } = useAuth();
 
   useEffect(() => {
-    fetchSettings();
-  }, []);
+    if (token && isAdmin) {
+      fetchSettings();
+    }
+  }, [token, isAdmin]);
 
   const fetchSettings = async () => {
     try {
-      const res = await fetch(getApiUrl('/api/settings'));
+      const res = await fetch(getApiUrl('/api/settings'), {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
       if (!res.ok) throw new Error('Failed to fetch settings');
       const data = await res.json();
       setSettings(data);
@@ -31,6 +37,8 @@ export default function SettingsPage() {
 
   const handleSave = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (!token) return;
+    
     setSaving(true);
     setError('');
     setSuccess('');
@@ -50,7 +58,10 @@ export default function SettingsPage() {
 
       const res = await fetch(getApiUrl('/api/settings'), {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify(data),
       });
 
@@ -74,6 +85,8 @@ export default function SettingsPage() {
       </div>
     );
   }
+
+  if (!isAdmin) return <div className="p-8 text-center">Access Denied</div>;
 
   return (
     <div className="p-8 space-y-8 max-w-6xl mx-auto">
