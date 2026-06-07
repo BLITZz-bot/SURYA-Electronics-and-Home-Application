@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
@@ -151,7 +152,7 @@ export default function CartPage() {
                  </div>
                  
                  <div className="py-2">
-                    <p className="text-xl">Subtotal ({totalQuantity} item{totalQuantity !== 1 ? 's' : ''}): <span className="font-bold">₹{totalAmount.toLocaleString()}</span></p>
+                    <p className="text-xl">Subtotal ({totalQuantity} item{totalQuantity !== 1 ? "s" : ""}): <span className="font-bold">₹{totalAmount.toLocaleString()}</span></p>
                  </div>
                  
                  <div className="flex items-center gap-2">

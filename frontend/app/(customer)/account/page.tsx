@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useAuth } from "../../../context/auth-context";
@@ -390,7 +391,7 @@ export default function AccountPage() {
                   ) : (
                     <div className="text-center py-32 bg-gray-50 rounded-3xl border border-dashed">
                        <svg className="w-16 h-16 text-gray-200 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
-                       <p className="text-gray-400 font-medium">You haven't placed any orders yet.</p>
+                       <p className="text-gray-400 font-medium">You haven&apos;t placed any orders yet.</p>
                        <Link href="/products" className="mt-4 inline-block bg-[#0F3D6E] text-white px-8 py-3 rounded-full font-bold shadow-lg transform active:scale-95">Shop Catalog</Link>
                     </div>
                   )}
@@ -399,6 +400,11 @@ export default function AccountPage() {
             )}
           </div>
         </div>
+      </div>
+    </main>
+  );
+}
+iv>
       </div>
     </main>
   );

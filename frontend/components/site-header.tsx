@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useState, useEffect, useRef } from "react";
@@ -29,18 +30,61 @@ export default function SiteHeader() {
     setDefaultAddress(address);
   };
 
+  const fetchDefaultAddress = useCallback(async () => {
+    try {
+      const { getApiUrl } = await import("../lib/api-utils");
+      const res = await fetch(getApiUrl("/api/addresses"), {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setDefaultAddress(data.find((a: any) => a.isDefault) || data[0]);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  }, [token]);
+
+  const fetchCategories = useCallback(async () => {
+    try {
+      const { getApiUrl } = await import("../lib/api-utils");
+      const res = await fetch(getApiUrl("/api/categories"));
+      if (res.ok) {
+        const data = await res.json();
+        setCategories(data);
+      }
+    } catch (err) {
+      console.error("Failed to fetch categories:", err);
+    }
+  }, []);
+
+  const fetchCartCount = useCallback(async () => {
+    try {
+      const { getApiUrl } = await import("../lib/api-utils");
+      const res = await fetch(getApiUrl("/api/cart"), {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setCartCount(Array.isArray(data) ? data.length : (data.items?.length || 0));
+      }
+    } catch (err) {
+      console.error("Failed to fetch cart count:", err);
+    }
+  }, [token]);
+
   useEffect(() => {
     if (token && !pathname.startsWith("/admin")) {
       fetchCartCount();
       fetchDefaultAddress();
     }
-  }, [token, pathname]);
+  }, [token, pathname, fetchCartCount, fetchDefaultAddress]);
 
   useEffect(() => {
     if (!pathname.startsWith("/admin")) {
       fetchCategories();
     }
-  }, [pathname]);
+  }, [pathname, fetchCategories]);
 
   // Live Search Logic
   useEffect(() => {
@@ -82,49 +126,6 @@ export default function SiteHeader() {
   }, [pathname]);
 
   if (pathname.startsWith("/admin")) return null;
-
-  async function fetchDefaultAddress() {
-    try {
-      const { getApiUrl } = await import("../lib/api-utils");
-      const res = await fetch(getApiUrl("/api/addresses"), {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setDefaultAddress(data.find((a: any) => a.isDefault) || data[0]);
-      }
-    } catch (err) {
-      console.error(err);
-    }
-  }
-
-  async function fetchCategories() {
-    try {
-      const { getApiUrl } = await import("../lib/api-utils");
-      const res = await fetch(getApiUrl("/api/categories"));
-      if (res.ok) {
-        const data = await res.json();
-        setCategories(data);
-      }
-    } catch (err) {
-      console.error("Failed to fetch categories:", err);
-    }
-  }
-
-  async function fetchCartCount() {
-    try {
-      const { getApiUrl } = await import("../lib/api-utils");
-      const res = await fetch(getApiUrl("/api/cart"), {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setCartCount(Array.isArray(data) ? data.length : (data.items?.length || 0));
-      }
-    } catch (err) {
-      console.error("Failed to fetch cart count:", err);
-    }
-  }
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();

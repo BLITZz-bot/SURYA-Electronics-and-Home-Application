@@ -234,8 +234,9 @@ export default function CheckoutPage() {
                 </button>
                 
                 <p className="text-[10px] text-white/40 text-center leading-relaxed">
-                   By confirming your order, you agree to SURYA's terms of service and standard return policy.
+                  By confirming your order, you agree to SURYA&apos;s terms of service and standard return policy.
                 </p>
+
              </div>
           </div>
         </div>

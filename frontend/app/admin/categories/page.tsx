@@ -89,9 +89,14 @@ export default function CategoriesPage() {
         headers: { "Authorization": `Bearer ${token}` },
       });
 
-      if (res.ok) fetchCategories();
+      if (res.ok) {
+        fetchCategories();
+      } else {
+        const data = await res.json();
+        alert(data.error || "Failed to delete category");
+      }
     } catch (err: any) {
-      alert(err.message);
+      alert("Network error occurred while deleting category");
     }
   };
 
