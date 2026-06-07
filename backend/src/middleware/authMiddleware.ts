@@ -1,14 +1,31 @@
 import * as admin from 'firebase-admin';
 import { Request, Response, NextFunction } from 'express';
+import path from 'path';
+import fs from 'fs';
 
 // Initialize Firebase Admin
-// You will need to add FIREBASE_SERVICE_ACCOUNT as an environment variable in Render
 if (!admin.apps.length) {
   try {
-    const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT || '{}');
-    admin.initializeApp({
-      credential: admin.credential.cert(serviceAccount),
-    });
+    const keyPath = path.join(process.cwd(), 'firebase-key.json');
+    
+    if (fs.existsSync(keyPath)) {
+      // Prefer local JSON file for testing
+      admin.initializeApp({
+        credential: admin.credential.cert(keyPath),
+      });
+      console.log('Firebase Admin initialized using firebase-key.json');
+    } else {
+      // Fallback to Env variable for production (Render)
+      const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT || '{}');
+      if (serviceAccount.project_id) {
+        admin.initializeApp({
+          credential: admin.credential.cert(serviceAccount),
+        });
+        console.log('Firebase Admin initialized using Environment Variable');
+      } else {
+        console.error('Firebase Admin Error: No credentials found (JSON or ENV)');
+      }
+    }
   } catch (error) {
     console.error('Firebase Admin initialization error:', error);
   }

@@ -4,3 +4,6 @@ frontend/.next/
 .env.local
 .env
 .DS_Store
+
+# Firebase private keys
+backend/firebase-key.json
