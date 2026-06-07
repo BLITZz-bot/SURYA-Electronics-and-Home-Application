@@ -41,6 +41,15 @@ export default function AdminDashboard() {
     if (token && isAdmin && (!cachedStats || now - lastFetchTime > CACHE_DURATION)) {
       fetchStats();
     }
+
+    // Set up auto-refresh every 30 seconds
+    const interval = setInterval(() => {
+      if (token && isAdmin) {
+        fetchStats();
+      }
+    }, 30000);
+
+    return () => clearInterval(interval);
   }, [token, isAdmin]);
 
   const handleManualRefresh = () => {
