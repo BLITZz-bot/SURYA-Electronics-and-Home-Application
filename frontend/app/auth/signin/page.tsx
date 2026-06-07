@@ -18,7 +18,7 @@ export default function SignInPage() {
         <div className="mt-10 flex flex-col gap-4">
           <button
             type="button"
-            onClick={() => signIn("google")}
+            onClick={() => signIn("google", { callbackUrl: "/" })}
             className="rounded-full bg-slate-900 px-6 py-3 text-white transition hover:bg-slate-800"
           >
             Sign in with Google
