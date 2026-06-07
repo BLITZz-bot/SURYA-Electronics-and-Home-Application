@@ -140,3 +140,16 @@ model VerificationToken {
 
   @@unique([identifier, token])
 }
+
+model StoreSettings {
+  id                    String   @id @default("default")
+  storeName             String   @default("SURYA Electronics")
+  storeDescription      String?
+  supportEmail          String?
+  supportPhone          String?
+  shippingFee           Decimal  @default(0)
+  freeShippingThreshold Decimal  @default(0)
+  taxRate               Decimal  @default(0)
+  currency              String   @default("INR")
+  updatedAt             DateTime @updatedAt
+}
