@@ -50,22 +50,28 @@ model User {
   cartItems     CartItem[]
   orders        Order[]
   sessions      Session[]
+  reviews       Review[]
+  helpfulVotes  ReviewHelpful[]
 }
 
 model Product {
-  id          String      @id @default(cuid())
-  name        String
-  description String
-  price       Decimal
-  stock       Int         @default(0)
-  categoryId  String
-  imageUrl    String
-  brand       String
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
-  category    Category    @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-  cartItems   CartItem[]
-  orderItems  OrderItem[]
+  id            String      @id @default(cuid())
+  name          String
+  description   String
+  price         Decimal     // Current sale price
+  originalPrice Decimal?    // MRP
+  discountValue Decimal?
+  discountType  String?     // "percentage" or "fixed"
+  stock         Int         @default(0)
+  categoryId    String
+  imageUrl      String
+  brand         String
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  category      Category    @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  cartItems     CartItem[]
+  orderItems    OrderItem[]
+  reviews       Review[]
 }
 
 model Category {
@@ -89,6 +95,46 @@ model CartItem {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, productId])
+}
+
+model Review {
+  id          String   @id @default(cuid())
+  productId   String
+  userId      String
+  rating      Int      @default(5)
+  title       String
+  description String
+  images      String[] @default([])
+  isVerified  Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  helpfulVotes ReviewHelpful[]
+
+  @@unique([productId, userId])
+}
+
+model ReviewHelpful {
+  id       String @id @default(cuid())
+  reviewId String
+  userId   String
+  review   Review @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([reviewId, userId])
+}
+
+model Offer {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  type        String   // "Bank", "Exchange", "Festival", "Cashback"
+  startDate   DateTime
+  endDate     DateTime
+  status      String   @default("active") // "active" or "inactive"
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 model Order {
@@ -121,18 +167,24 @@ model OrderItem {
 }
 
 model Address {
-  id         String   @id @default(cuid())
-  userId     String
-  label      String
-  line1      String
-  city       String
-  postalCode String
-  country    String
-  phone      String
-  isDefault  Boolean  @default(false)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id          String   @id @default(cuid())
+  userId      String
+  name        String
+  phone       String
+  houseNumber String
+  street      String
+  area        String?
+  city        String
+  district    String?
+  state       String
+  country     String   @default("India")
+  postalCode  String
+  latitude    Float?
+  longitude   Float?
+  isDefault   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model VerificationToken {
@@ -147,11 +199,16 @@ model StoreSettings {
   id                    String   @id @default("default")
   storeName             String   @default("SURYA Electronics")
   storeDescription      String?
-  supportEmail          String?
-  supportPhone          String?
+  storeAddress          String?
+  storeEmail            String?
+  storePhone            String?
+  storeLatitude         Float?
+  storeLongitude        Float?
   shippingFee           Decimal  @default(0)
   freeShippingThreshold Decimal  @default(0)
+  deliveryTime          String?  // e.g., "3-5 business days"
   taxRate               Decimal  @default(0)
   currency              String   @default("INR")
+  isConfigured          Boolean  @default(false)
   updatedAt             DateTime @updatedAt
 }

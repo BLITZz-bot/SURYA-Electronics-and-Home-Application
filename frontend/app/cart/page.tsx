@@ -1,7 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
+import { useAuth } from "../../context/auth-context";
+import { getApiUrl } from "../../lib/api-utils";
 
 interface CartItem {
   id: string;
@@ -16,101 +18,164 @@ interface CartItem {
 }
 
 export default function CartPage() {
+  const { token, loading: authLoading } = useAuth();
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchCart();
-  }, []);
-
-  async function fetchCart() {
+  const fetchCart = useCallback(async () => {
+    if (!token) return;
     setLoading(true);
-    const response = await fetch("/api/cart");
-    const result = await response.json();
-    if (response.ok) {
-      setCartItems(result.items ?? []);
-    } else {
-      setMessage(result.error ?? "Unable to load cart.");
+    try {
+      const response = await fetch(getApiUrl("/api/cart"), {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      const result = await response.json();
+      if (response.ok) {
+        setCartItems(Array.isArray(result) ? result : (result.items ?? []));
+      } else {
+        setMessage(result.error ?? "Unable to load cart.");
+      }
+    } catch (error) {
+      setMessage("Failed to connect to server.");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
-  }
+  }, [token]);
+
+  useEffect(() => {
+    if (!authLoading && token) {
+      fetchCart();
+    } else if (!authLoading && !token) {
+      setLoading(false);
+    }
+  }, [authLoading, token, fetchCart]);
 
   async function removeItem(cartItemId: string) {
+    if (!token) return;
     setLoading(true);
-    const response = await fetch(`/api/cart/${cartItemId}`, {
-      method: "DELETE",
-    });
-    const result = await response.json();
-    if (response.ok) {
-      fetchCart();
-    } else {
-      setMessage(result.error ?? "Unable to remove item.");
+    try {
+      const response = await fetch(getApiUrl(`/api/cart/${cartItemId}`), {
+        method: "DELETE",
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (response.ok) {
+        fetchCart();
+      } else {
+        const result = await response.json();
+        setMessage(result.error ?? "Unable to remove item.");
+        setLoading(false);
+      }
+    } catch (error) {
+      setMessage("Failed to remove item.");
       setLoading(false);
     }
   }
 
-  const totalAmount = cartItems.reduce((sum, item) => sum + item.quantity * item.product.price, 0);
+  const totalQuantity = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+  const totalAmount = cartItems.reduce((sum, item) => sum + item.quantity * Number(item.product.price), 0);
 
   return (
-    <main className="min-h-screen bg-slate-50 px-6 py-10 text-slate-900">
-      <div className="mx-auto max-w-5xl space-y-6">
-        <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-xl shadow-slate-100">
-          <h1 className="text-3xl font-semibold">Your cart</h1>
-          <p className="mt-2 text-slate-600">Review items before checkout.</p>
-        </div>
+    <main className="min-h-screen pb-20">
+      <div className="mx-auto max-w-[1500px] px-4 py-8">
+        <div className="flex flex-col lg:flex-row gap-6">
+          {/* Left Column: Items */}
+          <div className="flex-1 bg-white p-6 shadow-sm">
+            <h1 className="text-3xl font-medium border-b border-gray-200 pb-4">Shopping Cart</h1>
+            
+            {message && (
+              <div className="mt-4 p-4 bg-rose-50 text-rose-700 rounded-sm border border-rose-100 text-sm">
+                {message}
+              </div>
+            )}
 
-        {message ? (
-          <div className="rounded-3xl border border-rose-200 bg-rose-50 p-5 text-rose-800">{message}</div>
-        ) : null}
-
-        {loading ? (
-          <div className="rounded-3xl border border-slate-200 bg-white p-8 text-slate-700">Loading cart...</div>
-        ) : cartItems.length === 0 ? (
-          <div className="rounded-3xl border border-slate-200 bg-white p-8 text-slate-700">
-            Your cart is empty. <Link href="/products" className="text-sky-700 underline">Browse products.</Link>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {cartItems.map((item) => (
-              <div key={item.id} className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                  <div className="flex items-center gap-4">
-                    <img src={item.product.imageUrl} alt={item.product.name} className="h-24 w-24 rounded-3xl object-cover" />
-                    <div>
-                      <h2 className="text-lg font-semibold text-slate-900">{item.product.name}</h2>
-                      <p className="text-sm text-slate-600">Qty: {item.quantity}</p>
-                      <p className="text-sm text-slate-600">Price: ₹{item.product.price}</p>
+            {loading && cartItems.length === 0 ? (
+              <div className="py-20 text-center text-gray-500">Loading your shopping cart...</div>
+            ) : cartItems.length === 0 ? (
+              <div className="py-20 text-center space-y-4">
+                <p className="text-2xl font-bold">Your Shopping Cart is empty.</p>
+                <p className="text-sm">Check your Saved for later items below or <Link href="/products" className="text-sky-700 hover:underline">continue shopping</Link>.</p>
+              </div>
+            ) : (
+              <div className="divide-y divide-gray-200">
+                {cartItems.map((item) => (
+                  <div key={item.id} className="py-6 flex flex-col sm:flex-row gap-4">
+                    <div className="w-44 h-44 flex-shrink-0 flex items-center justify-center">
+                      <img src={item.product.imageUrl} alt={item.product.name} className="max-h-full max-w-full object-contain" />
+                    </div>
+                    <div className="flex-1 space-y-1">
+                      <div className="flex justify-between gap-4">
+                        <Link href={`/products/${item.product.id}`} className="text-lg font-medium text-slate-900 hover:text-orange-700 line-clamp-2">
+                          {item.product.name}
+                        </Link>
+                        <span className="text-lg font-bold">₹{Number(item.product.price).toLocaleString()}</span>
+                      </div>
+                      <p className="text-xs text-emerald-700">In Stock</p>
+                      <p className="text-xs text-gray-500">Eligible for FREE Shipping</p>
+                      
+                      <div className="flex items-center gap-4 pt-4">
+                        <div className="bg-gray-100 border border-gray-300 rounded-md px-2 py-1 flex items-center gap-2 shadow-sm text-xs">
+                           <span>Qty: {item.quantity}</span>
+                        </div>
+                        <span className="text-gray-300">|</span>
+                        <button 
+                          onClick={() => removeItem(item.id)}
+                          className="text-xs text-sky-700 hover:text-orange-700 hover:underline"
+                        >
+                          Delete
+                        </button>
+                        <span className="text-gray-300">|</span>
+                        <button className="text-xs text-sky-700 hover:text-orange-700 hover:underline">Save for later</button>
+                      </div>
                     </div>
                   </div>
-                  <div className="flex flex-col gap-2 sm:items-end">
-                    <p className="text-lg font-semibold">₹{item.quantity * item.product.price}</p>
-                    <button
-                      type="button"
-                      onClick={() => removeItem(item.id)}
-                      className="rounded-full bg-rose-600 px-4 py-2 text-white hover:bg-rose-700"
-                    >
-                      Remove
-                    </button>
-                  </div>
+                ))}
+                <div className="pt-4 text-right">
+                   <p className="text-xl">Subtotal ({totalQuantity} item{totalQuantity !== 1 ? 's' : ''}): <span className="font-bold">₹{totalAmount.toLocaleString()}</span></p>
                 </div>
               </div>
-            ))}
-
-            <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <p className="text-xl font-semibold">Total</p>
-                <p className="text-2xl font-semibold">₹{totalAmount.toFixed(0)}</p>
-              </div>
-              <Link
-                href="/checkout"
-                className="mt-6 inline-flex rounded-full bg-slate-900 px-6 py-3 text-white hover:bg-slate-700"
-              >
-                Proceed to checkout
-              </Link>
-            </div>
+            )}
           </div>
-        )}
+
+          {/* Right Column: Subtotal Sidebar */}
+          {cartItems.length > 0 && (
+            <div className="w-full lg:w-80 space-y-4">
+              <div className="bg-white p-5 shadow-sm space-y-4 border border-gray-100">
+                 <div className="flex items-start gap-2 text-emerald-700">
+                    <svg className="w-5 h-5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
+                    <p className="text-xs">Your order is eligible for FREE Delivery. Select this option at checkout.</p>
+                 </div>
+                 
+                 <div className="py-2">
+                    <p className="text-xl">Subtotal ({totalQuantity} item{totalQuantity !== 1 ? 's' : ''}): <span className="font-bold">₹{totalAmount.toLocaleString()}</span></p>
+                 </div>
+                 
+                 <div className="flex items-center gap-2">
+                   <input type="checkbox" id="gift" className="w-4 h-4 border-gray-300 rounded" />
+                   <label htmlFor="gift" className="text-sm cursor-pointer">This order contains a gift</label>
+                 </div>
+
+                 <Link
+                  href="/checkout"
+                  className="block w-full text-center bg-surya-light hover:bg-surya-dark text-white py-2.5 rounded-full text-sm font-bold shadow-md transition-all active:scale-95"
+                >
+                  Proceed to Buy
+                </Link>
+              </div>
+
+              <div className="bg-white p-5 shadow-sm border border-gray-100">
+                 <h3 className="text-sm font-bold mb-3">Recently viewed</h3>
+                 <div className="space-y-4">
+                    <p className="text-xs text-gray-400 italic">No recently viewed items.</p>
+                 </div>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </main>
   );

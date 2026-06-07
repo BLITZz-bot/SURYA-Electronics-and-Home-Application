@@ -14,7 +14,7 @@ export default function AuthButton() {
       <button
         type="button"
         onClick={() => router.push("/auth/signin")}
-        className="rounded-full bg-sky-600 px-5 py-3 text-white transition hover:bg-sky-700"
+        className="rounded-md bg-surya-light px-5 py-2 text-white font-bold transition hover:bg-surya-dark shadow-sm"
       >
         Sign in
       </button>
@@ -26,7 +26,7 @@ export default function AuthButton() {
       <button
         type="button"
         onClick={() => logout()}
-        className="rounded-full bg-slate-900 px-6 py-3 text-white transition hover:bg-slate-800"
+        className="rounded-md bg-white border border-gray-300 px-5 py-2 text-gray-700 font-bold transition hover:bg-gray-100 shadow-sm"
       >
         Sign out
       </button>

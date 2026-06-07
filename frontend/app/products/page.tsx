@@ -1,67 +1,65 @@
 import Link from "next/link";
 import { getApiUrl } from "../../lib/api-utils";
+import ProductCard from "../../components/product-card";
 
 export const dynamic = "force-dynamic";
 
-export default async function ProductsPage() {
+interface ProductsPageProps {
+  searchParams: {
+    category?: string;
+    search?: string;
+  };
+}
+
+export default async function ProductsPage({ searchParams }: ProductsPageProps) {
   let products: any[] = [];
+  const { category, search } = searchParams;
+  
   try {
     const url = getApiUrl('/api/products');
-    console.log("Fetching products from:", url);
     const res = await fetch(url, { cache: 'no-store' });
     
     if (res.ok) {
-      products = await res.json();
-      console.log("Successfully fetched", products.length, "products");
-    } else {
-      console.error("Failed to fetch products. Status:", res.status);
-      const errorText = await res.text();
-      console.error("Backend Error Response:", errorText);
+      const allProducts = await res.json();
+      products = allProducts;
+      
+      if (category) {
+        products = products.filter(p => p.category?.name === category);
+      }
+      
+      if (search) {
+        const query = search.toLowerCase();
+        products = products.filter(p => 
+          p.name.toLowerCase().includes(query) || 
+          p.description.toLowerCase().includes(query) ||
+          p.brand.toLowerCase().includes(query)
+        );
+      }
     }
   } catch (error: any) {
-    console.error("Products Page Fetch Crash:", error.message);
+    console.error("Products Page Fetch Error:", error.message);
   }
 
   return (
-    <main className="min-h-screen bg-slate-50 px-6 py-10 text-slate-900">
-      <div className="mx-auto max-w-6xl space-y-8">
-        <div className="rounded-3xl border border-slate-200 bg-white p-10 shadow-xl shadow-slate-100">
-          <p className="text-sm uppercase tracking-[0.3em] text-sky-700">Product catalog</p>
-          <h1 className="mt-4 text-4xl font-semibold">Browse electronic products</h1>
-          <p className="mt-3 text-slate-600">
-            Discover the latest mobile phones, home appliances, audio accessories, and more from SURYA Electronics.
-          </p>
+    <main className="min-h-screen bg-amazon-bg py-8">
+      <div className="mx-auto max-w-[1500px] px-4 space-y-6">
+        <div className="bg-white p-6 shadow-sm border border-gray-100 rounded-sm">
+          <h1 className="text-2xl font-bold text-gray-900">
+            {search ? `Results for "${search}"` : category ? `${category} Collection` : "Electronics Catalog"}
+          </h1>
+          <p className="text-sm text-gray-600 mt-1">Showing {products.length} products</p>
         </div>
 
         {products.length === 0 ? (
-          <div className="text-center py-20 bg-white rounded-3xl border border-dashed border-slate-300">
-            <p className="text-slate-500">No products found. Please ensure the database is seeded.</p>
+          <div className="text-center py-40 bg-white border border-dashed border-gray-300 rounded-sm">
+            <svg className="w-16 h-16 text-gray-200 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+            <p className="text-gray-500 font-bold text-xl">No products found matching your criteria.</p>
+            <Link href="/products" className="text-surya-light hover:underline mt-2 inline-block">Clear all filters</Link>
           </div>
         ) : (
-          <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
+          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
             {products.map((product) => (
-              <Link
-                key={product.id}
-                href={`/products/${product.id}`}
-                className="group rounded-3xl border border-slate-200 bg-white transition hover:-translate-y-1 hover:shadow-xl"
-              >
-                <div className="h-56 overflow-hidden rounded-t-3xl bg-slate-100">
-                  <img
-                    src={product.imageUrl}
-                    alt={product.name}
-                    className="h-full w-full object-cover object-center transition duration-300 group-hover:scale-105"
-                  />
-                </div>
-                <div className="p-6">
-                  <p className="text-xs uppercase tracking-[0.3em] text-slate-400">{(product as any).category?.name || 'Electronics'}</p>
-                  <h2 className="mt-3 text-xl font-semibold text-slate-900">{product.name}</h2>
-                  <p className="mt-3 text-sm text-slate-600 line-clamp-3">{product.description}</p>
-                  <div className="mt-6 flex items-center justify-between text-slate-900">
-                    <p className="text-lg font-semibold">₹{Number(product.price).toLocaleString()}</p>
-                    <p className="text-sm text-slate-500">Stock: {product.stock}</p>
-                  </div>
-                </div>
-              </Link>
+              <ProductCard key={product.id} product={product} />
             ))}
           </div>
         )}

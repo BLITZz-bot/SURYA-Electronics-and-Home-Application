@@ -6,6 +6,10 @@ import categoryRoutes from './routes/categoryRoutes';
 import orderRoutes from './routes/orderRoutes';
 import userRoutes from './routes/userRoutes';
 import settingsRoutes from './routes/settingsRoutes';
+import cartRoutes from './routes/cartRoutes';
+import addressRoutes from './routes/addressRoutes';
+import reviewRoutes from './routes/reviewRoutes';
+import offerRoutes from './routes/offerRoutes';
 
 dotenv.config();
 
@@ -33,6 +37,10 @@ app.use('/api/categories', categoryRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/settings', settingsRoutes);
+app.use('/api/cart', cartRoutes);
+app.use('/api/addresses', addressRoutes);
+app.use('/api/reviews', reviewRoutes);
+app.use('/api/offers', offerRoutes);
 
 app.listen(PORT, () => {
   console.log(`Backend server running on port ${PORT}`);

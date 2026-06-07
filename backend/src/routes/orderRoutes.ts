@@ -4,7 +4,8 @@ import {
   getOrderById, 
   updateOrder, 
   deleteOrder,
-  getMyOrders
+  getMyOrders,
+  createOrder
 } from '../controllers/orderController';
 import { verifyToken, isAdmin } from '../middleware/authMiddleware';
 
@@ -12,6 +13,7 @@ const router = Router();
 
 // Private routes
 router.get('/my-orders', verifyToken, getMyOrders);
+router.post('/', verifyToken, createOrder);
 
 // Admin-only routes
 router.get('/', verifyToken, isAdmin, getOrders);

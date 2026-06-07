@@ -48,10 +48,14 @@ export default function SettingsPage() {
       const data = {
         storeName: formData.get('storeName'),
         storeDescription: formData.get('storeDescription'),
-        supportEmail: formData.get('supportEmail'),
-        supportPhone: formData.get('supportPhone'),
+        storeAddress: formData.get('storeAddress'),
+        storeEmail: formData.get('storeEmail'),
+        storePhone: formData.get('storePhone'),
+        storeLatitude: formData.get('storeLatitude') ? parseFloat(formData.get('storeLatitude') as string) : null,
+        storeLongitude: formData.get('storeLongitude') ? parseFloat(formData.get('storeLongitude') as string) : null,
         shippingFee: parseFloat(formData.get('shippingFee') as string),
         freeShippingThreshold: parseFloat(formData.get('freeShippingThreshold') as string),
+        deliveryTime: formData.get('deliveryTime'),
         taxRate: parseFloat(formData.get('taxRate') as string),
         currency: formData.get('currency'),
       };
@@ -111,7 +115,7 @@ export default function SettingsPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Store Information */}
           <div className="bg-white rounded-2xl border border-slate-200 p-8 space-y-6">
-            <h2 className="text-xl font-bold text-slate-900 mb-6">Store Information</h2>
+            <h2 className="text-xl font-bold text-slate-900 mb-6">Store & Warehouse</h2>
 
             <div>
               <label className="block text-sm font-semibold text-slate-900 mb-2">Store Name</label>
@@ -119,90 +123,87 @@ export default function SettingsPage() {
                 type="text"
                 name="storeName"
                 defaultValue={settings?.storeName}
-                className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#0F3D6E]"
                 required
               />
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-slate-900 mb-2">Store Description</label>
+              <label className="block text-sm font-semibold text-slate-900 mb-2">Detailed Store Address</label>
               <textarea
-                name="storeDescription"
-                defaultValue={settings?.storeDescription}
-                rows={4}
-                className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                name="storeAddress"
+                defaultValue={settings?.storeAddress}
+                rows={3}
+                className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#0F3D6E]"
+                placeholder="Full address for delivery calculation..."
               />
             </div>
 
-            <div>
-              <label className="block text-sm font-semibold text-slate-900 mb-2">Support Email</label>
-              <input
-                type="email"
-                name="supportEmail"
-                defaultValue={settings?.supportEmail}
-                className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
+            <div className="grid grid-cols-2 gap-4">
+               <div>
+                  <label className="block text-sm font-semibold text-slate-900 mb-2">Latitude</label>
+                  <input type="number" step="any" name="storeLatitude" defaultValue={settings?.storeLatitude} className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#0F3D6E]" />
+               </div>
+               <div>
+                  <label className="block text-sm font-semibold text-slate-900 mb-2">Longitude</label>
+                  <input type="number" step="any" name="storeLongitude" defaultValue={settings?.storeLongitude} className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#0F3D6E]" />
+               </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-semibold text-slate-900 mb-2">Support Phone</label>
-              <input
-                type="tel"
-                name="supportPhone"
-                defaultValue={settings?.supportPhone}
-                className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-semibold text-slate-900 mb-2">Store Email</label>
+                <input type="email" name="storeEmail" defaultValue={settings?.storeEmail} className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#0F3D6E]" />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-slate-900 mb-2">Store Phone</label>
+                <input type="tel" name="storePhone" defaultValue={settings?.storePhone} className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#0F3D6E]" />
+              </div>
             </div>
           </div>
 
-          {/* Shipping & Taxes */}
+          {/* Shipping & Delivery */}
           <div className="bg-white rounded-2xl border border-slate-200 p-8 space-y-6">
-            <h2 className="text-xl font-bold text-slate-900 mb-6">Shipping & Taxes</h2>
+            <h2 className="text-xl font-bold text-slate-900 mb-6">Shipping Configuration</h2>
 
             <div>
-              <label className="block text-sm font-semibold text-slate-900 mb-2">Standard Shipping Fee (₹)</label>
+              <label className="block text-sm font-semibold text-slate-900 mb-2">Standard Delivery Cost (₹)</label>
               <input
                 type="number"
                 name="shippingFee"
                 defaultValue={Number(settings?.shippingFee)}
                 step="0.01"
-                className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#0F3D6E]"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-slate-900 mb-2">Free Shipping Threshold (₹)</label>
+              <label className="block text-sm font-semibold text-slate-900 mb-2">Free Delivery Threshold (₹)</label>
               <input
                 type="number"
                 name="freeShippingThreshold"
                 defaultValue={Number(settings?.freeShippingThreshold)}
                 step="0.01"
-                className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#0F3D6E]"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-slate-900 mb-2">Tax Rate (%)</label>
+              <label className="block text-sm font-semibold text-slate-900 mb-2">Estimated Delivery Time (Text)</label>
               <input
-                type="number"
-                name="taxRate"
-                defaultValue={Number(settings?.taxRate)}
-                step="0.01"
-                className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                type="text"
+                name="deliveryTime"
+                defaultValue={settings?.deliveryTime}
+                className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#0F3D6E]"
+                placeholder="e.g. 2-4 business days"
               />
             </div>
 
-            <div>
-              <label className="block text-sm font-semibold text-slate-900 mb-2">Default Currency</label>
-              <select 
-                name="currency"
-                defaultValue={settings?.currency}
-                className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="INR">INR - Indian Rupee (₹)</option>
-                <option value="USD">USD - US Dollar ($)</option>
-                <option value="EUR">EUR - Euro (€)</option>
-              </select>
+            <div className="pt-4 flex items-center gap-4 bg-blue-50 p-4 rounded-xl border border-blue-100">
+               <div className={`w-4 h-4 rounded-full ${settings?.isConfigured ? 'bg-emerald-500' : 'bg-gray-300'}`}></div>
+               <span className="text-sm font-bold text-blue-900">
+                  {settings?.isConfigured ? 'Shipping System Online' : 'System Pending Configuration'}
+               </span>
             </div>
           </div>
         </div>

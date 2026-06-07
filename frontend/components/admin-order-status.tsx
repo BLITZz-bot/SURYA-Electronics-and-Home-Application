@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useAuth } from "../context/auth-context";
+import { getApiUrl } from "../lib/api-utils";
 
 interface AdminOrderStatusProps {
   orderId: string;
@@ -11,20 +13,23 @@ interface AdminOrderStatusProps {
 const statusOptions = ["pending", "shipped", "delivered", "cancelled"];
 
 export default function AdminOrderStatus({ orderId, currentStatus }: AdminOrderStatusProps) {
+  const { token } = useAuth();
   const [selectedStatus, setSelectedStatus] = useState(currentStatus);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const router = useRouter();
 
   async function updateStatus() {
+    if (!token) return;
     setLoading(true);
     setMessage(null);
 
     try {
-      const response = await fetch(`/api/orders/${orderId}`, {
+      const response = await fetch(getApiUrl(`/api/orders/${orderId}`), {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
         },
         body: JSON.stringify({ status: selectedStatus }),
       });

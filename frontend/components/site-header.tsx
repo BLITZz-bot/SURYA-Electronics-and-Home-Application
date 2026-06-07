@@ -1,113 +1,218 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useAuth } from "../context/auth-context";
+import { useRouter } from "next/navigation";
 import AuthButton from "./auth-button";
 
 export default function SiteHeader() {
-  const { user, isAdmin } = useAuth();
+  const { user, isAdmin, token } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [cartCount, setCartCount] = useState(0);
+  const [categories, setCategories] = useState<any[]>([]);
+  const [defaultAddress, setDefaultAddress] = useState<any>(null);
+  const router = useRouter();
+
+  useEffect(() => {
+    if (token) {
+      fetchCartCount();
+      fetchDefaultAddress();
+    }
+  }, [token]);
+
+  async function fetchDefaultAddress() {
+    try {
+      const { getApiUrl } = await import("../lib/api-utils");
+      const res = await fetch(getApiUrl("/api/addresses"), {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setDefaultAddress(data.find((a: any) => a.isDefault) || data[0]);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  useEffect(() => {
+    fetchCategories();
+  }, []);
+
+  async function fetchCategories() {
+    try {
+      const { getApiUrl } = await import("../lib/api-utils");
+      const res = await fetch(getApiUrl("/api/categories"));
+      if (res.ok) {
+        const data = await res.json();
+        setCategories(data);
+      }
+    } catch (err) {
+      console.error("Failed to fetch categories:", err);
+    }
+  }
+
+  async function fetchCartCount() {
+    try {
+      const { getApiUrl } = await import("../lib/api-utils");
+      const res = await fetch(getApiUrl("/api/cart"), {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setCartCount(Array.isArray(data) ? data.length : (data.items?.length || 0));
+      }
+    } catch (err) {
+      console.error("Failed to fetch cart count:", err);
+    }
+  }
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      router.push(`/products?search=${encodeURIComponent(searchQuery)}`);
+    }
+  };
 
   return (
-    <header className="sticky top-0 z-50 border-b border-slate-200 bg-white/95 backdrop-blur-xl">
-      <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-6 py-4">
-        <Link href="/" className="text-xl font-semibold text-slate-900 shrink-0">
-          SURYA Electronics
-        </Link>
+    <header className="sticky top-0 z-50 shadow-md">
+      {/* Main Header */}
+      <div className="bg-[#0F3D6E] text-white">
+        <div className="mx-auto flex max-w-[1500px] items-center gap-4 px-4 py-2">
+          {/* Logo */}
+          <Link href="/" className="flex items-center p-2 hover:outline outline-1 outline-white rounded-sm">
+            <span className="text-xl font-bold tracking-tight">SURYA</span>
+            <span className="text-amazon-orange text-xs font-bold mt-2 ml-1">Electronics</span>
+          </Link>
 
-        {/* Desktop Navigation */}
-        <nav className="hidden items-center gap-4 md:flex">
-          <Link href="/products" className="text-sm font-medium text-slate-600 hover:text-slate-900">
-            Products
-          </Link>
-          <Link href="/cart" className="text-sm font-medium text-slate-600 hover:text-slate-900">
-            Cart
-          </Link>
-          <Link href="/orders" className="text-sm font-medium text-slate-600 hover:text-slate-900">
-            Orders
-          </Link>
-          {isAdmin && (
-            <Link href="/admin" className="text-sm font-medium text-slate-600 hover:text-slate-900">
-              Admin
-            </Link>
-          )}
-        </nav>
-
-        <div className="flex items-center gap-4">
-          {/* Desktop User Info */}
-          {user?.email && (
-            <div className="hidden min-w-[220px] flex-col rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 lg:flex">
-              <span className="font-medium truncate">{user.displayName ?? user.email}</span>
-              <span className="text-slate-500">{isAdmin ? "Admin" : "Customer"}</span>
+          {/* Location */}
+          <div className="hidden lg:flex flex-col p-2 hover:outline outline-1 outline-white rounded-sm cursor-pointer min-w-[120px]">
+            <span className="text-[11px] text-gray-300 leading-none">Deliver to {user?.displayName?.split(' ')[0] || 'User'}</span>
+            <div className="flex items-center">
+              <svg className="w-4 h-4 mr-0.5 text-amazon-yellow" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+              <span className="text-sm font-bold truncate max-w-[100px]">
+                {defaultAddress ? `${defaultAddress.city}` : 'Select Location'}
+              </span>
             </div>
-          )}
-          
-          <div className="hidden md:block">
-            <AuthButton />
           </div>
 
-          {/* Mobile Menu Button */}
-          <button 
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="rounded-xl p-2 text-slate-600 hover:bg-slate-50 md:hidden"
-            aria-label="Toggle menu"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              {isMenuOpen ? <path d="M18 6 6 18M6 6l12 12"/> : <path d="M3 12h18M3 6h18M3 18h18"/>}
-            </svg>
-          </button>
+          {/* Search Bar */}
+          <form onSubmit={handleSearch} className="flex flex-1 h-10 group">
+            <select className="hidden md:block bg-gray-100 text-gray-700 text-xs px-2 rounded-l-md border-r border-gray-300 focus:outline-none focus:ring-2 focus:ring-amazon-orange">
+              <option>All</option>
+              {categories.map(cat => (
+                <option key={cat.id} value={cat.name}>{cat.name}</option>
+              ))}
+            </select>
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="flex-1 px-4 py-2 text-black text-sm focus:outline-none"
+              placeholder="Search SURYA Electronics"
+            />
+            <button 
+              type="submit"
+              className="bg-amazon-orange hover:bg-orange-500 p-2 rounded-r-md transition-colors"
+            >
+              <svg className="w-6 h-6 text-amazon-dark" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+            </button>
+          </form>
+
+          {/* Right Actions */}
+          <div className="flex items-center gap-1">
+            <Link href={user ? "/account" : "/auth/signin"} className="hidden sm:flex flex-col p-2 hover:outline outline-1 outline-white rounded-sm">
+              <span className="text-[11px] leading-none">Hello, {user?.displayName || (user?.email ? user.email.split('@')[0] : 'Sign in')}</span>
+              <span className="text-sm font-bold">Account & Lists</span>
+            </Link>
+
+            <Link href="/orders" className="hidden sm:flex flex-col p-2 hover:outline outline-1 outline-white rounded-sm">
+              <span className="text-[11px] leading-none">Returns</span>
+              <span className="text-sm font-bold">& Orders</span>
+            </Link>
+
+            <Link href="/cart" className="flex items-end p-2 hover:outline outline-1 outline-white rounded-sm relative">
+              <div className="relative">
+                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
+                <span className="absolute -top-1 left-4 bg-amazon-dark text-amazon-orange text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center border border-amazon-orange">
+                  {cartCount}
+                </span>
+              </div>
+              <span className="text-sm font-bold hidden md:block ml-1">Cart</span>
+            </Link>
+
+            {isAdmin && (
+              <Link href="/admin" className="hidden lg:flex flex-col p-2 hover:outline outline-1 outline-white rounded-sm text-amazon-yellow">
+                <span className="text-[11px] leading-none">Admin</span>
+                <span className="text-sm font-bold">Portal</span>
+              </Link>
+            )}
+
+            <div className="md:hidden">
+               <button 
+                onClick={() => setIsMenuOpen(!isMenuOpen)}
+                className="p-2 text-white"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" /></svg>
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Mobile Navigation Overlay */}
+      {/* Secondary Nav */}
+      <div className="bg-[#5DADE2] text-white overflow-x-auto whitespace-nowrap scrollbar-hide">
+        <div className="mx-auto flex max-w-[1500px] items-center px-4 h-10 gap-4 text-sm font-medium">
+          <button className="flex items-center gap-1 p-2 hover:outline outline-1 outline-white rounded-sm">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" /></svg>
+            All
+          </button>
+          {categories.slice(0, 6).map(cat => (
+            <Link key={cat.id} href={`/products?category=${cat.name}`} className="p-2 hover:outline outline-1 outline-white rounded-sm">
+              {cat.name}
+            </Link>
+          ))}
+          <div className="flex-1"></div>
+          {token && (
+            <button onClick={() => import("../lib/firebase").then(m => m.auth.signOut())} className="p-2 hover:outline outline-1 outline-white rounded-sm text-xs">
+              Sign Out
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Mobile Menu Overlay */}
       {isMenuOpen && (
-        <div className="border-t border-slate-100 bg-white p-6 shadow-xl md:hidden animate-in slide-in-from-top duration-200">
-          <nav className="flex flex-col gap-4">
-            {user?.email && (
-              <div className="mb-2 flex flex-col rounded-2xl bg-slate-50 p-4 text-sm text-slate-700">
-                <span className="font-bold text-slate-900">{user.displayName ?? user.email}</span>
-                <span className="text-slate-500">{isAdmin ? "Admin Portal Access" : "Customer Account"}</span>
-              </div>
-            )}
-            <Link 
-              href="/products" 
-              onClick={() => setIsMenuOpen(false)}
-              className="flex items-center gap-3 rounded-xl px-4 py-3 text-base font-semibold text-slate-700 hover:bg-slate-50"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
-              Browse Products
-            </Link>
-            <Link 
-              href="/cart" 
-              onClick={() => setIsMenuOpen(false)}
-              className="flex items-center gap-3 rounded-xl px-4 py-3 text-base font-semibold text-slate-700 hover:bg-slate-50"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
-              My Cart
-            </Link>
-            <Link 
-              href="/orders" 
-              onClick={() => setIsMenuOpen(false)}
-              className="flex items-center gap-3 rounded-xl px-4 py-3 text-base font-semibold text-slate-700 hover:bg-slate-50"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
-              My Orders
-            </Link>
-            {isAdmin && (
-              <Link 
-                href="/admin" 
-                onClick={() => setIsMenuOpen(false)}
-                className="flex items-center gap-3 rounded-xl px-4 py-3 text-base font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/></svg>
-                Admin Dashboard
-              </Link>
-            )}
-            <div className="mt-4 pt-4 border-t border-slate-100">
-              <AuthButton />
+        <div className="fixed inset-0 z-[60] flex">
+          <div className="w-[80%] max-w-[350px] bg-white h-full shadow-2xl animate-in slide-in-from-left duration-300">
+            <div className="bg-[#0F3D6E] text-white p-4 flex items-center gap-3">
+              <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" /></svg>
+              <span className="text-lg font-bold">Hello, {user?.displayName || 'Sign in'}</span>
             </div>
-          </nav>
+            <nav className="p-4 space-y-6">
+              <section>
+                <h3 className="text-lg font-bold mb-2">Shop By Category</h3>
+                <ul className="space-y-4 text-sm text-gray-700">
+                  <li><Link href="/products" onClick={() => setIsMenuOpen(false)}>All Electronics</Link></li>
+                  {categories.map(cat => (
+                    <li key={cat.id}><Link href={`/products?category=${cat.name}`} onClick={() => setIsMenuOpen(false)}>{cat.name}</Link></li>
+                  ))}
+                </ul>
+              </section>
+              <section className="pt-6 border-t border-gray-100">
+                <h3 className="text-lg font-bold mb-2">Help & Settings</h3>
+                <ul className="space-y-4 text-sm text-gray-700">
+                  <li><Link href="/account" onClick={() => setIsMenuOpen(false)}>Your Account</Link></li>
+                  <li><Link href="/orders" onClick={() => setIsMenuOpen(false)}>Your Orders</Link></li>
+                  {isAdmin && <li><Link href="/admin" onClick={() => setIsMenuOpen(false)} className="text-blue-600">Admin Panel</Link></li>}
+                  <li><AuthButton /></li>
+                </ul>
+              </section>
+            </nav>
+          </div>
+          <div className="flex-1 bg-black/60" onClick={() => setIsMenuOpen(false)}></div>
         </div>
       )}
     </header>

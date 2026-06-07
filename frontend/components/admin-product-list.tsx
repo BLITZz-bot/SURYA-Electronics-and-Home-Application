@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useAuth } from "../context/auth-context";
+import { getApiUrl } from "../lib/api-utils";
 
 interface AdminProductListProps {
   initialProducts: any[];
@@ -9,6 +11,7 @@ interface AdminProductListProps {
 }
 
 export default function AdminProductList({ initialProducts, onEdit }: AdminProductListProps) {
+  const { token } = useAuth();
   const [products, setProducts] = useState(initialProducts);
   const router = useRouter();
   const [loadingId, setLoadingId] = useState<string | null>(null);
@@ -18,12 +21,16 @@ export default function AdminProductList({ initialProducts, onEdit }: AdminProdu
   }, [initialProducts]);
 
   async function deleteProduct(id: string) {
+    if (!token) return;
     if (!confirm("Are you sure you want to delete this product? This action cannot be undone.")) return;
 
     setLoadingId(id);
     try {
-      const response = await fetch(`/api/products/${id}`, {
+      const response = await fetch(getApiUrl(`/api/products/${id}`), {
         method: "DELETE",
+        headers: {
+          "Authorization": `Bearer ${token}`
+        }
       });
 
       if (response.ok) {
@@ -64,16 +71,21 @@ export default function AdminProductList({ initialProducts, onEdit }: AdminProdu
                 <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mt-1">{product.brand}</p>
               </td>
               <td className="py-5">
-                <span className="text-xs font-medium text-slate-500 bg-slate-100 px-2 py-1 rounded-md">{product.category}</span>
+                <span className="text-xs font-medium text-[#0F3D6E] bg-[#0F3D6E]/5 px-3 py-1 rounded-full uppercase tracking-tighter">{product.category?.name || 'Uncategorized'}</span>
               </td>
               <td className="py-5 text-center">
-                <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider ${
-                  product.stock < 10 ? 'bg-rose-50 text-rose-700' : 'bg-emerald-50 text-emerald-700'
+                <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-wider ${
+                  product.stock < 10 ? 'bg-rose-50 text-rose-700 border border-rose-100' : 'bg-emerald-50 text-emerald-700 border border-emerald-100'
                 }`}>
-                  {product.stock} units
+                  {product.stock} left
                 </span>
               </td>
-              <td className="py-5 text-right font-bold text-slate-900">₹{Number(product.price).toLocaleString()}</td>
+              <td className="py-5 text-right">
+                 <p className="font-black text-gray-900">₹{Number(product.price).toLocaleString()}</p>
+                 {product.originalPrice && Number(product.originalPrice) > Number(product.price) && (
+                   <p className="text-[10px] text-gray-400 line-through">₹{Number(product.originalPrice).toLocaleString()}</p>
+                 )}
+              </td>
               <td className="py-5 text-right px-2">
                 <div className="flex items-center justify-end gap-3">
                   <button 

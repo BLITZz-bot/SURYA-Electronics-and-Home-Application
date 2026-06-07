@@ -2,22 +2,27 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useAuth } from "../context/auth-context";
+import { getApiUrl } from "../lib/api-utils";
 
 export default function AdminUserList({ initialUsers }: { initialUsers: any[] }) {
+  const { token } = useAuth();
   const [users, setUsers] = useState(initialUsers);
   const router = useRouter();
   const [loadingId, setLoadingId] = useState<string | null>(null);
 
   async function toggleRole(userId: string, currentRole: string) {
+    if (!token) return;
     const newRole = currentRole === "admin" ? "customer" : "admin";
     if (!confirm(`Are you sure you want to change this user's role to ${newRole}?`)) return;
 
     setLoadingId(userId);
     try {
-      const response = await fetch(`/api/users/${userId}`, {
+      const response = await fetch(getApiUrl(`/api/users/${userId}`), {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
         },
         body: JSON.stringify({ role: newRole }),
       });

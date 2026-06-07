@@ -2,42 +2,58 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
+import { useAuth } from "../../../context/auth-context";
+import { getApiUrl } from "../../../lib/api-utils";
 
 interface PageProps {
   params: { id: string };
 }
 
 export default function OrderDetailPage({ params }: PageProps) {
+  const { token, loading: authLoading } = useAuth();
   const router = useRouter();
   const [order, setOrder] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
   const [error, setError] = useState('');
 
-  useEffect(() => {
-    const fetchOrder = async () => {
-      try {
-        const res = await fetch(`/api/admin/orders/${params.id}`);
-        if (!res.ok) throw new Error('Order not found');
-        const data = await res.json();
-        setOrder(data);
-      } catch (err: any) {
-        setError(err.message || 'Failed to fetch order');
-      } finally {
-        setLoading(false);
-      }
-    };
+  const fetchOrder = useCallback(async () => {
+    if (!token) return;
+    try {
+      const res = await fetch(getApiUrl(`/api/orders/${params.id}`), {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (!res.ok) throw new Error('Order not found');
+      const data = await res.json();
+      setOrder(data);
+    } catch (err: any) {
+      setError(err.message || 'Failed to fetch order');
+    } finally {
+      setLoading(false);
+    }
+  }, [params.id, token]);
 
-    fetchOrder();
-  }, [params.id]);
+  useEffect(() => {
+    if (!authLoading && token) {
+      fetchOrder();
+    } else if (!authLoading && !token) {
+      router.push("/auth/signin");
+    }
+  }, [authLoading, token, fetchOrder, router]);
 
   const updateStatus = async (status: string) => {
+    if (!token) return;
     setUpdating(true);
     try {
-      const res = await fetch(`/api/admin/orders/${params.id}`, {
+      const res = await fetch(getApiUrl(`/api/orders/${params.id}`), {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify({ status }),
       });
 
@@ -54,11 +70,15 @@ export default function OrderDetailPage({ params }: PageProps) {
   };
 
   const updatePaymentStatus = async (paymentStatus: string) => {
+    if (!token) return;
     setUpdating(true);
     try {
-      const res = await fetch(`/api/admin/orders/${params.id}`, {
+      const res = await fetch(getApiUrl(`/api/orders/${params.id}`), {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify({ paymentStatus }),
       });
 

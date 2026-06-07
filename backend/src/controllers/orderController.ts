@@ -80,3 +80,64 @@ export const deleteOrder = async (req: Request, res: Response) => {
     res.status(500).json({ error: 'Failed to delete order' });
   }
 };
+
+export const createOrder = async (req: Request, res: Response) => {
+  const firebaseUser = (req as any).user;
+  const { 
+    shippingAddress, 
+    shippingCity, 
+    shippingPostalCode, 
+    shippingCountry, 
+    shippingPhone 
+  } = req.body;
+
+  try {
+    // 1. Find user
+    const user = await prisma.user.findUnique({
+      where: { email: firebaseUser.email },
+      include: { cartItems: { include: { product: true } } }
+    });
+
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    if (user.cartItems.length === 0) return res.status(400).json({ error: 'Cart is empty' });
+
+    // 2. Calculate total
+    const totalAmount = user.cartItems.reduce((sum, item) => {
+      return sum + (item.quantity * Number(item.product.price));
+    }, 0);
+
+    // 3. Create order with items in a transaction
+    const order = await prisma.$transaction(async (tx) => {
+      const newOrder = await tx.order.create({
+        data: {
+          userId: user.id,
+          totalAmount,
+          shippingAddress,
+          shippingCity,
+          shippingPostalCode,
+          shippingCountry,
+          shippingPhone,
+          items: {
+            create: user.cartItems.map(item => ({
+              productId: item.productId,
+              quantity: item.quantity,
+              price: item.product.price
+            }))
+          }
+        }
+      });
+
+      // 4. Clear cart
+      await tx.cartItem.deleteMany({
+        where: { userId: user.id }
+      });
+
+      return newOrder;
+    });
+
+    res.status(201).json(order);
+  } catch (error) {
+    console.error('Create order error:', error);
+    res.status(500).json({ error: 'Failed to place order' });
+  }
+};
