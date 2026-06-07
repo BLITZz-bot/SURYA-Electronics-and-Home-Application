@@ -1,4 +1,4 @@
-'use dynamic';
+export const dynamic = "force-dynamic";
 
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "../../lib/auth";
