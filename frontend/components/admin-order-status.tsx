@@ -6,12 +6,11 @@ import { useRouter } from "next/navigation";
 interface AdminOrderStatusProps {
   orderId: string;
   currentStatus: string;
-  onUpdate?: () => void;
 }
 
 const statusOptions = ["pending", "shipped", "delivered", "cancelled"];
 
-export default function AdminOrderStatus({ orderId, currentStatus, onUpdate }: AdminOrderStatusProps) {
+export default function AdminOrderStatus({ orderId, currentStatus }: AdminOrderStatusProps) {
   const [selectedStatus, setSelectedStatus] = useState(currentStatus);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -36,7 +35,6 @@ export default function AdminOrderStatus({ orderId, currentStatus, onUpdate }: A
       } else {
         setMessage("Status updated.");
         router.refresh();
-        if (onUpdate) onUpdate();
       }
     } catch (error) {
       setMessage("Unable to update order status.");
