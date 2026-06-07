@@ -14,15 +14,10 @@ export default function AdminDashboard() {
   const { token, loading: authLoading, isAdmin } = useAuth();
   const [stats, setStats] = useState<any>(cachedStats);
   const [loading, setLoading] = useState(!cachedStats);
+  const [refreshing, setRefreshing] = useState(false);
 
-  useEffect(() => {
-    const now = Date.now();
-    if (token && isAdmin && (!cachedStats || now - lastFetchTime > CACHE_DURATION)) {
-      fetchStats();
-    }
-  }, [token, isAdmin]);
-
-  const fetchStats = async () => {
+  const fetchStats = async (isManual = false) => {
+    if (isManual) setRefreshing(true);
     try {
       const res = await fetch(getApiUrl('/api/settings/stats'), {
         headers: { 'Authorization': `Bearer ${token}` }
@@ -37,10 +32,22 @@ export default function AdminDashboard() {
       console.error("Failed to fetch dashboard stats:", err);
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   };
 
-  if (authLoading || loading) {
+  useEffect(() => {
+    const now = Date.now();
+    if (token && isAdmin && (!cachedStats || now - lastFetchTime > CACHE_DURATION)) {
+      fetchStats();
+    }
+  }, [token, isAdmin]);
+
+  const handleManualRefresh = () => {
+    fetchStats(true);
+  };
+
+  if (authLoading || (loading && !refreshing)) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-slate-50">
         <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-blue-600"></div>
@@ -53,18 +60,32 @@ export default function AdminDashboard() {
   return (
     <div className="space-y-6 bg-slate-50 min-h-screen">
       {/* Header */}
-      <div className="flex items-baseline justify-between">
+      <div className="flex items-center justify-between">
         <div>
           <h1 className="text-4xl font-bold text-slate-900">Dashboard</h1>
           <p className="text-slate-600 mt-1">SURYA Electronics Admin Control Center</p>
         </div>
-        <div className="text-sm text-slate-500">
-          {new Date().toLocaleDateString('en-IN', { 
-            weekday: 'long', 
-            year: 'numeric', 
-            month: 'long', 
-            day: 'numeric'
-          })}
+        <div className="flex items-center gap-4">
+          <button 
+            onClick={handleManualRefresh}
+            disabled={refreshing}
+            className="flex items-center gap-2 rounded-xl bg-white border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors shadow-sm disabled:opacity-50"
+          >
+            <svg 
+              xmlns="http://www.w3.org/2000/svg" 
+              width="16" height="16" 
+              viewBox="0 0 24 24" fill="none" 
+              stroke="currentColor" strokeWidth="2" 
+              strokeLinecap="round" strokeLinejoin="round"
+              className={refreshing ? 'animate-spin' : ''}
+            >
+              <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/>
+            </svg>
+            {refreshing ? 'Refreshing...' : 'Refresh Data'}
+          </button>
+          <div className="hidden sm:block text-right text-xs text-slate-500">
+            Last updated: {new Date(lastFetchTime).toLocaleTimeString()}
+          </div>
         </div>
       </div>
 
