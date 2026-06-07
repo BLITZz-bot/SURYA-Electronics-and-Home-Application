@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { getApiUrl } from "../../../../lib/api-utils";
 import { useAuth } from "../../../../context/auth-context";
+import { uploadImage } from "../../../../lib/supabase";
 
 export default function EditProductPage({ params }: { params: { id: string } }) {
   const router = useRouter();
@@ -12,8 +13,10 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
   const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState('');
+  const [imageUrl, setImageUrl] = useState('');
   const { token, isAdmin } = useAuth();
 
   useEffect(() => {
@@ -30,6 +33,7 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
         const categoriesData = await categoriesRes.json();
 
         setProduct(productData);
+        setImageUrl(productData.imageUrl);
         setCategories(categoriesData);
       } catch (err: any) {
         setError(err.message || 'Failed to fetch data');
@@ -40,6 +44,23 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
 
     fetchData();
   }, [params.id]);
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploading(true);
+    setError('');
+    try {
+      const url = await uploadImage(file);
+      setImageUrl(url);
+    } catch (err: any) {
+      console.error('Upload error:', err);
+      setError('Failed to upload image to Supabase');
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -56,7 +77,7 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
         brand: formData.get('brand'),
         price: formData.get('price'),
         stock: formData.get('stock'),
-        imageUrl: formData.get('imageUrl') || '',
+        imageUrl: imageUrl || formData.get('imageUrl') || '',
       };
 
       const res = await fetch(getApiUrl(`/api/products/${params.id}`), {
@@ -166,13 +187,50 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
             </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-semibold text-slate-900 mb-2">Image URL</label>
-            <input type="url" name="imageUrl" defaultValue={product.imageUrl} className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500" />
+          <div className="space-y-4">
+            <label className="block text-sm font-semibold text-slate-900">Product Image</label>
+            <div className="flex flex-col gap-4">
+              <div className="flex items-center gap-4">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileUpload}
+                  className="hidden"
+                  id="image-upload-edit"
+                />
+                <label
+                  htmlFor="image-upload-edit"
+                  className="cursor-pointer bg-slate-900 text-white px-6 py-2 rounded-xl text-sm font-semibold hover:bg-slate-800 transition-colors"
+                >
+                  {uploading ? 'Uploading...' : 'Upload to Supabase'}
+                </label>
+                <span className="text-sm text-slate-500">OR</span>
+                <input
+                  type="url"
+                  name="imageUrl"
+                  value={imageUrl}
+                  onChange={(e) => setImageUrl(e.target.value)}
+                  placeholder="Paste external image URL"
+                  className="flex-1 px-4 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              {imageUrl && (
+                <div className="relative w-40 h-40 rounded-2xl overflow-hidden border border-slate-200">
+                  <img src={imageUrl} alt="Preview" className="w-full h-full object-cover" />
+                  <button
+                    type="button"
+                    onClick={() => setImageUrl('')}
+                    className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full hover:bg-red-600"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"/></svg>
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
 
           <div className="flex gap-4 pt-6 border-t border-slate-200">
-            <button type="submit" disabled={saving} className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-xl disabled:bg-slate-400">{saving ? 'Saving...' : 'Save Changes'}</button>
+            <button type="submit" disabled={saving || uploading} className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-xl disabled:bg-slate-400">{saving ? 'Saving...' : 'Save Changes'}</button>
             <button type="button" onClick={handleDelete} disabled={deleting} className="flex-1 bg-red-100 hover:bg-red-200 text-red-700 font-semibold py-3 rounded-xl disabled:bg-slate-200">{deleting ? 'Deleting...' : 'Delete Product'}</button>
           </div>
         </div>
