@@ -1,9 +1,9 @@
-/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
 import { getApiUrl } from "../../../lib/api-utils";
 import { useAuth } from "../../../context/auth-context";
+import Image from "next/image";
 import { 
   Users, 
   Search, 
@@ -127,8 +127,17 @@ export default function AdminUsersPage() {
                 <tr key={user.id} className="hover:bg-blue-50/30 transition-colors group">
                   <td className="px-8 py-6">
                     <div className="flex items-center gap-4">
-                       <div className="w-12 h-12 rounded-2xl bg-[#0F3D6E] flex items-center justify-center text-white font-black shadow-lg shadow-[#0F3D6E]/20">
-                          {user.image ? <img src={user.image} alt="" className="w-full h-full rounded-2xl object-cover" /> : user.email[0].toUpperCase()}
+                       <div className="w-12 h-12 rounded-2xl bg-[#0F3D6E] flex items-center justify-center text-white font-black shadow-lg shadow-[#0F3D6E]/10 relative overflow-hidden">
+                          {user.image ? (
+                            <Image 
+                              src={user.image} 
+                              alt={user.name || "User Profile"} 
+                              fill 
+                              className="object-cover" 
+                            />
+                          ) : (
+                            user.email?.[0]?.toUpperCase() || "U"
+                          )}
                        </div>
                        <div>
                           <p className="font-black text-gray-900">{user.name || 'Anonymous'}</p>

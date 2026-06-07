@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { getApiUrl } from "../../lib/api-utils";
 import ProductCard from "../../components/product-card";
 import { Loader2 } from "lucide-react";
@@ -96,11 +97,12 @@ export default function HomePage() {
             {activeCategories.slice(0, 4).map((cat, i) => (
               <div key={cat.id} className="bg-white p-8 shadow-2xl rounded-[40px] flex flex-col h-[480px] group border border-gray-100 hover:border-[#0F3D6E]/20 transition-all transform hover:-translate-y-2">
                 <h3 className="text-2xl font-black text-[#0F3D6E] mb-6 italic tracking-tighter uppercase">{cat.name}</h3>
-                <div className="flex-1 overflow-hidden mb-8 bg-gray-50 flex items-center justify-center rounded-[30px] border border-gray-50 shadow-inner group-hover:bg-blue-50 transition-colors duration-500">
-                  <img 
+                <div className="flex-1 overflow-hidden mb-8 bg-gray-50 flex items-center justify-center rounded-[30px] border border-gray-50 shadow-inner group-hover:bg-blue-50 transition-colors duration-500 relative">
+                  <Image 
                     src={cat.image || products.find(p => p.categoryId === cat.id)?.imageUrl || "/placeholder-product.png"} 
                     alt={cat.name} 
-                    className="max-h-64 object-contain group-hover:scale-110 transition-transform duration-700 ease-out" 
+                    fill
+                    className="object-contain group-hover:scale-110 transition-transform duration-700 ease-out" 
                   />
                 </div>
                 <Link href={`/products?category=${cat.name}`} className="text-[#0F3D6E] font-black hover:text-orange-600 transition-colors flex items-center gap-2 mt-auto uppercase text-xs tracking-widest">

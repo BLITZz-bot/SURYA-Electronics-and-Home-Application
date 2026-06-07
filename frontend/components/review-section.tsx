@@ -1,10 +1,10 @@
-/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useState } from "react";
 import { useAuth } from "../context/auth-context";
 import { getApiUrl } from "../lib/api-utils";
 import Link from "next/link";
+import Image from "next/image";
 
 interface ReviewSectionProps {
   productId: string;
@@ -175,8 +175,12 @@ export default function ReviewSection({
           {sortedReviews.length > 0 ? sortedReviews.map((review) => (
             <div key={review.id} className="pt-10 first:pt-0 space-y-4">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center overflow-hidden">
-                   {review.user.image ? <img src={review.user.image} alt="" className="w-full h-full object-cover" /> : <svg className="w-5 h-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" /></svg>}
+                <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center overflow-hidden relative">
+                   {review.user.image ? (
+                    <Image src={review.user.image} alt={review.user.name || "User"} fill className="object-cover" />
+                   ) : (
+                    <svg className="w-5 h-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" /></svg>
+                   )}
                 </div>
                 <span className="text-sm font-bold text-gray-900">{review.user.name || "Amazon Customer"}</span>
               </div>

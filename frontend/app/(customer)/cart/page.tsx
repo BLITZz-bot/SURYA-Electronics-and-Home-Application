@@ -1,8 +1,8 @@
-/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useAuth } from "../../../context/auth-context";
 import { getApiUrl } from "../../../lib/api-utils";
 
@@ -105,8 +105,13 @@ export default function CartPage() {
               <div className="divide-y divide-gray-200">
                 {cartItems.map((item) => (
                   <div key={item.id} className="py-6 flex flex-col sm:flex-row gap-4">
-                    <div className="w-44 h-44 flex-shrink-0 flex items-center justify-center">
-                      <img src={item.product.imageUrl} alt={item.product.name} className="max-h-full max-w-full object-contain" />
+                    <div className="w-44 h-44 flex-shrink-0 flex items-center justify-center relative overflow-hidden">
+                      <Image 
+                        src={item.product.imageUrl} 
+                        alt={item.product.name} 
+                        fill
+                        className="object-contain" 
+                      />
                     </div>
                     <div className="flex-1 space-y-1">
                       <div className="flex justify-between gap-4">
@@ -136,7 +141,7 @@ export default function CartPage() {
                   </div>
                 ))}
                 <div className="pt-4 text-right">
-                   <p className="text-xl">Subtotal ({totalQuantity} item{totalQuantity !== 1 ? 's' : ''}): <span className="font-bold">₹{totalAmount.toLocaleString()}</span></p>
+                   <p className="text-xl">Subtotal ({totalQuantity} item{totalQuantity !== 1 ? "s" : ""}): <span className="font-bold">₹{totalAmount.toLocaleString()}</span></p>
                 </div>
               </div>
             )}

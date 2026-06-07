@@ -1,8 +1,8 @@
-/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useAuth } from "../context/auth-context";
 import { useRouter, usePathname } from "next/navigation";
 import AuthButton from "./auth-button";
@@ -227,7 +227,9 @@ export default function SiteHeader() {
                     onClick={() => setShowSuggestions(false)}
                     className="flex items-center gap-3 p-3 hover:bg-blue-50 transition-colors border-b border-gray-50 last:border-none"
                    >
-                      <img src={p.imageUrl} alt="" className="w-8 h-8 object-contain bg-white rounded p-0.5 border border-gray-100" />
+                      <div className="w-8 h-8 relative shrink-0">
+                        <Image src={p.imageUrl} alt="" fill className="object-contain bg-white rounded p-0.5 border border-gray-100" />
+                      </div>
                       <div className="min-w-0">
                         <p className="text-xs font-bold text-gray-900 truncate">{p.name}</p>
                         <p className="text-[9px] font-black text-[#5DADE2] uppercase tracking-tighter">₹{Number(p.price).toLocaleString()}</p>

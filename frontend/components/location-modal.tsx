@@ -19,6 +19,7 @@ export default function LocationModal({ isOpen, onClose, onAddressSelect }: Loca
   const [locating, setLocating] = useState(false);
 
   const fetchAddresses = useCallback(async () => {
+    if (!token) return;
     setLoading(true);
     try {
       const res = await fetch(getApiUrl("/api/addresses"), {

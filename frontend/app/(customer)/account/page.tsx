@@ -1,11 +1,12 @@
-/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useAuth } from "../../../context/auth-context";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { useEffect, useState, useCallback } from "react";
 import { getApiUrl } from "../../../lib/api-utils";
+import { CheckCircle2 } from "lucide-react";
 
 export default function AccountPage() {
   const { user, dbUser, loading, logout, token } = useAuth();
@@ -376,8 +377,13 @@ export default function AccountPage() {
                          <div className="p-6">
                             {order.items?.map((item: any) => (
                                <div key={item.id} className="flex gap-4 mb-4 last:mb-0">
-                                  <div className="h-16 w-16 bg-gray-100 rounded-xl flex items-center justify-center p-2">
-                                     <img src={item.product?.imageUrl} alt={item.product?.name} className="max-h-full object-contain" />
+                                  <div className="h-16 w-16 bg-gray-100 rounded-xl flex items-center justify-center p-2 relative overflow-hidden">
+                                     <Image 
+                                      src={item.product?.imageUrl} 
+                                      alt={item.product?.name || "Product"} 
+                                      fill
+                                      className="object-contain" 
+                                     />
                                   </div>
                                   <div>
                                      <p className="font-bold text-gray-900 line-clamp-1">{item.product?.name}</p>

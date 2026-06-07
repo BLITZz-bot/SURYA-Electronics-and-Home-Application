@@ -1,10 +1,10 @@
-/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Star, ShoppingCart, ArrowRight } from "lucide-react";
+import { Star, ArrowRight } from "lucide-react";
 
 interface ProductCardProps {
   product: any;
@@ -24,16 +24,18 @@ export default function ProductCard({ product }: ProductCardProps) {
         className="group flex flex-col bg-white transition-all p-6 rounded-[32px] border border-gray-100 hover:border-[#0F3D6E]/10 hover:shadow-[0_24px_48px_-12px_rgba(15,61,110,0.12)] h-full relative overflow-hidden"
       >
         <div className="h-56 overflow-hidden bg-gray-50/50 rounded-2xl mb-6 flex items-center justify-center p-4 relative group-hover:bg-white transition-colors duration-500">
-          <img
-            src={imgSrc}
-            alt={product.name}
-            className="max-h-full max-w-full object-contain transition-transform duration-700 ease-out group-hover:scale-110"
-            loading="lazy"
-            onError={() => setImgSrc("/placeholder-product.png")}
-          />
+          <div className="relative w-full h-full">
+            <Image
+              src={imgSrc}
+              alt={product.name}
+              fill
+              className="object-contain transition-transform duration-700 ease-out group-hover:scale-110"
+              onError={() => setImgSrc("/placeholder-product.png")}
+            />
+          </div>
           {/* Discount Badge */}
           {product.originalPrice && Number(product.originalPrice) > Number(product.price) && (
-            <div className="absolute top-4 left-4 bg-rose-600 text-white text-[10px] font-black px-2.5 py-1 rounded-full uppercase tracking-tighter shadow-lg">
+            <div className="absolute top-4 left-4 bg-rose-600 text-white text-[10px] font-black px-2.5 py-1 rounded-full uppercase tracking-tighter shadow-lg z-10">
                {Math.round(((Number(product.originalPrice) - Number(product.price)) / Number(product.originalPrice)) * 100)}% OFF
             </div>
           )}
@@ -52,7 +54,7 @@ export default function ProductCard({ product }: ProductCardProps) {
                <div className="flex items-center gap-1.5">
                   <div className="flex items-center gap-0.5 text-amazon-orange">
                      <Star size={12} fill="currentColor" />
-                     <span className="text-xs font-black text-gray-900">{product.avgRating.toFixed(1)}</span>
+                     <span className="text-xs font-black text-gray-900">{product.avgRating?.toFixed(1) || "0.0"}</span>
                   </div>
                   <span className="text-[10px] text-gray-400 font-bold uppercase tracking-tighter">({product.totalReviews})</span>
                </div>

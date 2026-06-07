@@ -1,16 +1,14 @@
-/* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { useAuth } from "../context/auth-context";
 import { getApiUrl } from "../lib/api-utils";
 import { 
   Search, 
-  Filter, 
   ChevronDown, 
-  MoreVertical, 
   Edit3, 
   Trash2, 
   Eye, 
@@ -23,8 +21,7 @@ import {
   CheckSquare,
   Square,
   Tag,
-  Store,
-  Calendar
+  Store
 } from "lucide-react";
 import { cn } from "../lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
@@ -64,7 +61,6 @@ export default function AdminProductList({ initialProducts, onEdit }: AdminProdu
     let valA = a[sortField];
     let valB = b[sortField];
     
-    // Handle nested fields or special logic
     if (sortField === "sales") {
       valA = a.salesCount || 0;
       valB = b.salesCount || 0;
@@ -118,7 +114,6 @@ export default function AdminProductList({ initialProducts, onEdit }: AdminProdu
     if (!token || selectedIds.length === 0) return;
     if (!confirm(`Delete ${selectedIds.length} selected products?`)) return;
 
-    // In a real app, use a bulk delete endpoint. For now, sequential (not ideal but works for this demo scope)
     for (const id of selectedIds) {
        await fetch(getApiUrl(`/api/products/${id}`), {
         method: "DELETE",
@@ -233,8 +228,13 @@ export default function AdminProductList({ initialProducts, onEdit }: AdminProdu
                 </td>
                 <td className="px-6 py-6">
                   <div className="flex items-center gap-4">
-                    <div className="h-14 w-14 rounded-2xl bg-white border border-gray-100 flex items-center justify-center p-2 shadow-sm group-hover:shadow-md transition-all">
-                      <img src={product.imageUrl} alt="" className="max-h-full max-w-full object-contain" />
+                    <div className="h-14 w-14 rounded-2xl bg-white border border-gray-100 flex items-center justify-center p-2 shadow-sm group-hover:shadow-md transition-all relative overflow-hidden">
+                      <Image 
+                        src={product.imageUrl} 
+                        alt={product.name} 
+                        fill
+                        className="object-contain p-2" 
+                      />
                     </div>
                     <div>
                       <p className="font-black text-gray-900 line-clamp-1 italic uppercase tracking-tighter">{product.name}</p>
@@ -309,9 +309,6 @@ export default function AdminProductList({ initialProducts, onEdit }: AdminProdu
           </div>
         )}
       </div>
-
-      {/* Mobile Actions Drawer Placeholder (User requested drop-down menu on mobile) */}
-      {/* Using simple flex-wrap for now which handles responsiveness well in standard tables */}
     </div>
   );
 }

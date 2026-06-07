@@ -1,8 +1,8 @@
-/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { useAuth } from "../context/auth-context";
 import { getApiUrl } from "../lib/api-utils";
 
@@ -58,13 +58,20 @@ export default function AdminUserList({ initialUsers }: { initialUsers: any[] })
             <tr key={user.id} className="text-sm group hover:bg-slate-50/50 transition-colors">
               <td className="py-5">
                 <div className="flex items-center gap-4">
-                  {user.image ? (
-                    <img src={user.image} alt="" className="h-10 w-10 rounded-2xl border border-slate-100 shadow-sm" />
-                  ) : (
-                    <div className="h-10 w-10 rounded-2xl bg-slate-100 flex items-center justify-center text-xs font-bold text-slate-400">
-                      {user.email?.[0].toUpperCase()}
-                    </div>
-                  )}
+                  <div className="h-10 w-10 rounded-2xl border border-slate-100 shadow-sm relative overflow-hidden flex items-center justify-center bg-slate-50">
+                    {user.image ? (
+                      <Image 
+                        src={user.image} 
+                        alt={user.name || "User"} 
+                        fill 
+                        className="object-cover" 
+                      />
+                    ) : (
+                      <span className="text-xs font-bold text-slate-400">
+                        {user.email?.[0].toUpperCase() || "U"}
+                      </span>
+                    )}
+                  </div>
                   <div>
                     <p className="font-bold text-slate-900">{user.name || 'No Name'}</p>
                     <p className="text-xs text-slate-500">{user.email}</p>
