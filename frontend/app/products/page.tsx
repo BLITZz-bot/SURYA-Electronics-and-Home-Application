@@ -6,12 +6,20 @@ export const dynamic = "force-dynamic";
 export default async function ProductsPage() {
   let products: any[] = [];
   try {
-    const res = await fetch(getApiUrl('/api/products'), { cache: 'no-store' });
+    const url = getApiUrl('/api/products');
+    console.log("Fetching products from:", url);
+    const res = await fetch(url, { cache: 'no-store' });
+    
     if (res.ok) {
       products = await res.json();
+      console.log("Successfully fetched", products.length, "products");
+    } else {
+      console.error("Failed to fetch products. Status:", res.status);
+      const errorText = await res.text();
+      console.error("Backend Error Response:", errorText);
     }
-  } catch (error) {
-    console.error("Products Page Error:", error);
+  } catch (error: any) {
+    console.error("Products Page Fetch Crash:", error.message);
   }
 
   return (
