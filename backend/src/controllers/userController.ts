@@ -17,8 +17,9 @@ export const getUsers = async (req: Request, res: Response) => {
 
 export const getUserById = async (req: Request, res: Response) => {
   try {
+    const { id } = req.params;
     const user = await prisma.user.findUnique({
-      where: { id: req.params.id },
+      where: { id: id as string },
       include: {
         orders: { include: { items: { include: { product: true } } } },
         addresses: true
@@ -33,9 +34,10 @@ export const getUserById = async (req: Request, res: Response) => {
 
 export const updateUser = async (req: Request, res: Response) => {
   try {
+    const { id } = req.params;
     const { role } = req.body;
     const user = await prisma.user.update({
-      where: { id: req.params.id },
+      where: { id: id as string },
       data: { role },
     });
     res.json(user);
@@ -46,8 +48,9 @@ export const updateUser = async (req: Request, res: Response) => {
 
 export const deleteUser = async (req: Request, res: Response) => {
   try {
+    const { id } = req.params;
     await prisma.user.delete({
-      where: { id: req.params.id },
+      where: { id: id as string },
     });
     res.json({ success: true });
   } catch (error) {

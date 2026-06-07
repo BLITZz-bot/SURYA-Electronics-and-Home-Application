@@ -26,9 +26,10 @@ export const createCategory = async (req: Request, res: Response) => {
 
 export const updateCategory = async (req: Request, res: Response) => {
   try {
+    const { id } = req.params;
     const { name, slug, image } = req.body;
     const category = await prisma.category.update({
-      where: { id: req.params.id },
+      where: { id: id as string },
       data: { name, slug, image },
     });
     res.json(category);
@@ -39,14 +40,15 @@ export const updateCategory = async (req: Request, res: Response) => {
 
 export const deleteCategory = async (req: Request, res: Response) => {
   try {
+    const { id } = req.params;
     const productCount = await prisma.product.count({
-      where: { categoryId: req.params.id }
+      where: { categoryId: id as string }
     });
     if (productCount > 0) {
       return res.status(400).json({ error: 'Cannot delete category with products' });
     }
     await prisma.category.delete({
-      where: { id: req.params.id },
+      where: { id: id as string },
     });
     res.json({ success: true });
   } catch (error) {

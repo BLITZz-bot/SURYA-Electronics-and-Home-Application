@@ -35,8 +35,9 @@ export const createProduct = async (req: Request, res: Response) => {
 
 export const getProductById = async (req: Request, res: Response) => {
   try {
+    const { id } = req.params;
     const product = await prisma.product.findUnique({
-      where: { id: req.params.id },
+      where: { id: id as string },
       include: { category: true },
     });
     if (!product) return res.status(404).json({ error: 'Product not found' });
@@ -48,9 +49,10 @@ export const getProductById = async (req: Request, res: Response) => {
 
 export const updateProduct = async (req: Request, res: Response) => {
   try {
+    const { id } = req.params;
     const { name, description, categoryId, brand, price, stock, imageUrl } = req.body;
     const product = await prisma.product.update({
-      where: { id: req.params.id },
+      where: { id: id as string },
       data: {
         name,
         description,
@@ -69,8 +71,9 @@ export const updateProduct = async (req: Request, res: Response) => {
 
 export const deleteProduct = async (req: Request, res: Response) => {
   try {
+    const { id } = req.params;
     await prisma.product.delete({
-      where: { id: req.params.id },
+      where: { id: id as string },
     });
     res.json({ success: true });
   } catch (error) {
