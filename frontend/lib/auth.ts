@@ -18,40 +18,66 @@ export const authOptions: NextAuthOptions = {
   },
   pages: {
     signIn: "/auth/signin",
-    error: "/auth/error", // Added error page
+    error: "/auth/error",
   },
   callbacks: {
-    async jwt({ token, user, trigger }) {
-      // Promotion logic moved to JWT callback to avoid blocking the sign-in redirect
-      if (user && user.email) {
-        const adminEmails = process.env.ADMIN_EMAILS?.split(",").map((email) => email.trim().toLowerCase()) ?? [];
-        if (adminEmails.includes(user.email.toLowerCase())) {
-          try {
-            await prisma.user.update({
-              where: { email: user.email },
-              data: { role: "admin" },
-            });
-          } catch (error) {
-            console.error("JWT promotion error:", error);
-          }
+    async signIn({ user }) {
+      if (!user.email) return false;
+      
+      const adminEmails = process.env.ADMIN_EMAILS?.split(",").map((email) => email.trim().toLowerCase()) ?? [];
+      const isAdmin = adminEmails.includes(user.email.toLowerCase());
+
+      if (isAdmin) {
+        try {
+          // Sync admin role to database immediately on sign in
+          await prisma.user.upsert({
+            where: { email: user.email },
+            update: { role: "admin" },
+            create: { 
+              email: user.email, 
+              name: user.name, 
+              image: user.image,
+              role: "admin" 
+            },
+          });
+          console.log("Admin verified and synced:", user.email);
+        } catch (error) {
+          console.error("Admin sync error:", error);
         }
+      }
+      return true;
+    },
+    async jwt({ token, user }) {
+      if (user) {
+        token.id = user.id;
+        // Check if this user should be an admin
+        const adminEmails = process.env.ADMIN_EMAILS?.split(",").map((email) => email.trim().toLowerCase()) ?? [];
+        token.role = (user.email && adminEmails.includes(user.email.toLowerCase())) ? "admin" : "customer";
+      } else if (token.email) {
+        // Refresh role from DB if needed, or keep from token
+        const adminEmails = process.env.ADMIN_EMAILS?.split(",").map((email) => email.trim().toLowerCase()) ?? [];
+        token.role = adminEmails.includes(token.email.toLowerCase()) ? "admin" : "customer";
       }
       return token;
     },
     async session({ session, token }) {
-      if (session.user && session.user.email) {
-        // Use the token to persist user ID and Role without repeated DB lookups if possible
-        // But for absolute certainty, we do one quick lookup
-        const dbUser = await prisma.user.findUnique({
-          where: { email: session.user.email },
-        });
-        if (dbUser) {
-          session.user.id = dbUser.id;
-          session.user.role = dbUser.role;
-        }
+      if (session.user) {
+        session.user.id = token.id as string;
+        session.user.role = token.role as string;
       }
       return session;
     },
   },
-  debug: process.env.NODE_ENV === "development", // Enable debug logs in development
+  cookies: {
+    sessionToken: {
+      name: `next-auth.session-token`,
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: true
+      }
+    }
+  },
+  debug: true,
 };
