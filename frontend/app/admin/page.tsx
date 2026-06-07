@@ -21,7 +21,7 @@ export default async function AdminOverviewPage() {
     <div className="space-y-10">
       <div className="flex flex-col gap-2">
         <h1 className="text-4xl font-bold tracking-tight text-slate-900">Dashboard Overview</h1>
-        <p className="text-slate-500">Welcome back! Here&apos;s what&apos;s happening with SURYA Electronics today.</p>
+        <p className="text-slate-500">Welcome back! Here&apos;s what&apos;s happening with SURYA Electronics today. (v1.0.1)</p>
       </div>
 
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">

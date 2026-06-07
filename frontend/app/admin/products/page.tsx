@@ -8,6 +8,11 @@ export default async function AdminProductsPage() {
     },
   });
 
+  const serializedProducts = products.map(p => ({
+    ...p,
+    price: Number(p.price)
+  }));
+
   return (
     <div className="space-y-8">
       <div className="flex flex-col gap-2">
@@ -15,7 +20,7 @@ export default async function AdminProductsPage() {
         <p className="text-slate-500">Add, edit, or remove products from your store inventory.</p>
       </div>
 
-      <AdminProductManager initialProducts={products} />
+      <AdminProductManager initialProducts={serializedProducts} />
     </div>
   );
 }
