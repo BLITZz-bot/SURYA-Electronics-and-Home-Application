@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { getApiUrl } from '../../../lib/api-utils';
+import { useAuth } from '../../../context/auth-context';
 
 export default function CategoriesPage() {
   const [categories, setCategories] = useState<any[]>([]);
@@ -10,7 +11,7 @@ export default function CategoriesPage() {
   const [error, setError] = useState('');
   const [isAdding, setIsAdding] = useState(false);
   const [newCategory, setNewCategory] = useState({ name: '', slug: '', image: '' });
-  const [editingId, setEditingId] = useState<string | null>(null);
+  const { token, isAdmin } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
@@ -31,9 +32,9 @@ export default function CategoriesPage() {
 
   const handleAddCategory = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!token) return;
     setError('');
     
-    // Auto-generate slug if empty
     const categoryData = {
       ...newCategory,
       slug: newCategory.slug || newCategory.name.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '')
@@ -42,7 +43,10 @@ export default function CategoriesPage() {
     try {
       const res = await fetch(getApiUrl('/api/categories'), {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify(categoryData),
       });
 
@@ -62,10 +66,14 @@ export default function CategoriesPage() {
 
   const handleDeleteCategory = async (id: string) => {
     if (!confirm('Are you sure you want to delete this category?')) return;
+    if (!token) return;
 
     try {
       const res = await fetch(getApiUrl(`/api/categories/${id}`), {
         method: 'DELETE',
+        headers: { 
+          'Authorization': `Bearer ${token}`
+        },
       });
 
       if (!res.ok) {
@@ -95,7 +103,7 @@ export default function CategoriesPage() {
           <h1 className="text-3xl font-bold text-slate-900">Categories</h1>
           <p className="text-slate-600 mt-1">Manage product categories</p>
         </div>
-        {!isAdding && (
+        {!isAdding && isAdmin && (
           <button 
             onClick={() => setIsAdding(true)}
             className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-xl transition-colors flex items-center gap-2"
@@ -184,12 +192,14 @@ export default function CategoriesPage() {
                 </td>
                 <td className="px-6 py-4 text-slate-600 font-mono text-sm">{category.slug}</td>
                 <td className="px-6 py-4 text-right">
-                  <button 
-                    onClick={() => handleDeleteCategory(category.id)}
-                    className="text-red-600 hover:text-red-700 font-semibold text-sm"
-                  >
-                    Delete
-                  </button>
+                  {isAdmin && (
+                    <button 
+                      onClick={() => handleDeleteCategory(category.id)}
+                      className="text-red-600 hover:text-red-700 font-semibold text-sm"
+                    >
+                      Delete
+                    </button>
+                  )}
                 </td>
               </tr>
             ))}

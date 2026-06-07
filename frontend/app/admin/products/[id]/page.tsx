@@ -3,12 +3,10 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { getApiUrl } from "../../../../lib/api-utils";
+import { useAuth } from "../../../../context/auth-context";
 
-interface PageProps {
-  params: { id: string };
-}
-
-export default function EditProductPage({ params }: PageProps) {
+export default function EditProductPage({ params }: { params: { id: string } }) {
   const router = useRouter();
   const [product, setProduct] = useState<any>(null);
   const [categories, setCategories] = useState<any[]>([]);
@@ -16,13 +14,14 @@ export default function EditProductPage({ params }: PageProps) {
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState('');
+  const { token, isAdmin } = useAuth();
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         const [productRes, categoriesRes] = await Promise.all([
-          fetch(`/api/admin/products/${params.id}`),
-          fetch('/api/admin/categories')
+          fetch(getApiUrl(`/api/products/${params.id}`)),
+          fetch(getApiUrl('/api/categories'))
         ]);
 
         if (!productRes.ok) throw new Error('Product not found');
@@ -44,6 +43,7 @@ export default function EditProductPage({ params }: PageProps) {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (!token) return;
     setSaving(true);
     setError('');
 
@@ -59,15 +59,16 @@ export default function EditProductPage({ params }: PageProps) {
         imageUrl: formData.get('imageUrl') || '',
       };
 
-      const res = await fetch(`/api/admin/products/${params.id}`, {
+      const res = await fetch(getApiUrl(`/api/products/${params.id}`), {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify(data),
       });
 
-      if (!res.ok) {
-        throw new Error('Failed to update product');
-      }
+      if (!res.ok) throw new Error('Failed to update product');
 
       router.push('/admin/products');
       router.refresh();
@@ -80,18 +81,20 @@ export default function EditProductPage({ params }: PageProps) {
 
   const handleDelete = async () => {
     if (!confirm('Are you sure you want to delete this product?')) return;
+    if (!token) return;
 
     setDeleting(true);
     setError('');
 
     try {
-      const res = await fetch(`/api/admin/products/${params.id}`, {
+      const res = await fetch(getApiUrl(`/api/products/${params.id}`), {
         method: 'DELETE',
+        headers: { 
+          'Authorization': `Bearer ${token}`
+        },
       });
 
-      if (!res.ok) {
-        throw new Error('Failed to delete product');
-      }
+      if (!res.ok) throw new Error('Failed to delete product');
 
       router.push('/admin/products');
       router.refresh();
@@ -109,17 +112,7 @@ export default function EditProductPage({ params }: PageProps) {
     );
   }
 
-  if (error && !product) {
-    return (
-      <div className="max-w-4xl mx-auto p-8 text-center">
-        <h1 className="text-2xl font-bold text-red-600">Error</h1>
-        <p className="text-slate-600 mt-2">{error}</p>
-        <Link href="/admin/products" className="text-blue-600 hover:underline mt-4 inline-block">
-          Back to Products
-        </Link>
-      </div>
-    );
-  }
+  if (!isAdmin) return <div className="p-8 text-center">Access Denied</div>;
 
   return (
     <div className="max-w-4xl mx-auto p-8">
@@ -129,7 +122,6 @@ export default function EditProductPage({ params }: PageProps) {
           Back to Products
         </Link>
         <h1 className="text-3xl font-bold text-slate-900 mt-4">Edit Product</h1>
-        <p className="text-slate-600 mt-1">Update product details and inventory</p>
       </div>
 
       {error && (
@@ -140,123 +132,48 @@ export default function EditProductPage({ params }: PageProps) {
 
       <form onSubmit={handleSubmit} className="space-y-8">
         <div className="bg-white rounded-2xl border border-slate-200 p-8 space-y-6">
-          {/* Product Name */}
           <div>
             <label className="block text-sm font-semibold text-slate-900 mb-2">Product Name *</label>
-            <input
-              type="text"
-              name="name"
-              defaultValue={product.name}
-              className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="Enter product name"
-              required
-            />
+            <input type="text" name="name" defaultValue={product.name} className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500" required />
           </div>
 
-          {/* Description */}
           <div>
             <label className="block text-sm font-semibold text-slate-900 mb-2">Description *</label>
-            <textarea
-              name="description"
-              defaultValue={product.description}
-              rows={5}
-              className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="Enter product description"
-              required
-            />
+            <textarea name="description" defaultValue={product.description} rows={5} className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500" required />
           </div>
 
-          {/* Category & Brand */}
           <div className="grid grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-semibold text-slate-900 mb-2">Category *</label>
-              <select name="categoryId" defaultValue={product.categoryId} className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500" required>
-                <option value="">Select category</option>
-                {categories.map((cat) => (
-                  <option key={cat.id} value={cat.id}>
-                    {cat.name}
-                  </option>
-                ))}
+              <select name="categoryId" defaultValue={product.categoryId} className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500" required>
+                {categories.map((cat) => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
               </select>
             </div>
             <div>
               <label className="block text-sm font-semibold text-slate-900 mb-2">Brand *</label>
-              <input
-                type="text"
-                name="brand"
-                defaultValue={product.brand}
-                className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="e.g., Samsung, Sony"
-                required
-              />
+              <input type="text" name="brand" defaultValue={product.brand} className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500" required />
             </div>
           </div>
 
-          {/* Price & Stock */}
           <div className="grid grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-semibold text-slate-900 mb-2">Price (₹) *</label>
-              <input
-                type="number"
-                name="price"
-                step="0.01"
-                defaultValue={Number(product.price)}
-                className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="0.00"
-                required
-              />
+              <input type="number" name="price" step="0.01" defaultValue={Number(product.price)} className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500" required />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-slate-900 mb-2">Stock Quantity *</label>
-              <input
-                type="number"
-                name="stock"
-                defaultValue={product.stock}
-                className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="0"
-                required
-              />
+              <label className="block text-sm font-semibold text-slate-900 mb-2">Stock *</label>
+              <input type="number" name="stock" defaultValue={product.stock} className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500" required />
             </div>
           </div>
 
-          {/* Image URL */}
           <div>
             <label className="block text-sm font-semibold text-slate-900 mb-2">Image URL</label>
-            <input
-              type="url"
-              name="imageUrl"
-              defaultValue={product.imageUrl}
-              className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="https://example.com/image.jpg"
-            />
-            {product.imageUrl && (
-              <div className="mt-4 p-4 bg-slate-50 rounded-xl">
-                <p className="text-sm text-slate-600 mb-2">Preview:</p>
-                <img src={product.imageUrl} alt={product.name} className="h-40 object-cover rounded-lg" />
-              </div>
-            )}
+            <input type="url" name="imageUrl" defaultValue={product.imageUrl} className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500" />
           </div>
 
-          {/* Action Buttons */}
           <div className="flex gap-4 pt-6 border-t border-slate-200">
-            <button
-              type="submit"
-              disabled={saving}
-              className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-400 text-white font-semibold py-3 rounded-xl transition-colors"
-            >
-              {saving ? 'Saving...' : 'Save Changes'}
-            </button>
-            <button
-              type="button"
-              onClick={handleDelete}
-              disabled={deleting}
-              className="flex-1 bg-red-100 hover:bg-red-200 disabled:bg-slate-200 text-red-700 font-semibold py-3 rounded-xl transition-colors"
-            >
-              {deleting ? 'Deleting...' : 'Delete Product'}
-            </button>
-            <Link href="/admin/products" className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-900 font-semibold py-3 rounded-xl transition-colors text-center">
-              Cancel
-            </Link>
+            <button type="submit" disabled={saving} className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-xl disabled:bg-slate-400">{saving ? 'Saving...' : 'Save Changes'}</button>
+            <button type="button" onClick={handleDelete} disabled={deleting} className="flex-1 bg-red-100 hover:bg-red-200 text-red-700 font-semibold py-3 rounded-xl disabled:bg-slate-200">{deleting ? 'Deleting...' : 'Delete Product'}</button>
           </div>
         </div>
       </form>

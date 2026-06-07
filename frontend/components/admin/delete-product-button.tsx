@@ -2,18 +2,25 @@
 
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { getApiUrl } from '../../lib/api-utils';
+import { useAuth } from '../../context/auth-context';
 
 export default function DeleteProductButton({ productId }: { productId: string }) {
   const router = useRouter();
   const [isDeleting, setIsDeleting] = useState(false);
+  const { token } = useAuth();
 
   const handleDelete = async () => {
     if (!confirm('Are you sure you want to delete this product?')) return;
+    if (!token) return;
 
     setIsDeleting(true);
     try {
-      const res = await fetch(`/api/admin/products/${productId}`, {
+      const res = await fetch(getApiUrl(`/api/products/${productId}`), {
         method: 'DELETE',
+        headers: { 
+          'Authorization': `Bearer ${token}`
+        },
       });
 
       if (!res.ok) {

@@ -5,12 +5,16 @@ import {
   updateCategory, 
   deleteCategory 
 } from '../controllers/categoryController';
+import { verifyToken, isAdmin } from '../middleware/authMiddleware';
 
 const router = Router();
 
+// Public routes
 router.get('/', getCategories);
-router.post('/', createCategory);
-router.put('/:id', updateCategory);
-router.delete('/:id', deleteCategory);
+
+// Admin-only routes
+router.post('/', verifyToken, isAdmin, createCategory);
+router.put('/:id', verifyToken, isAdmin, updateCategory);
+router.delete('/:id', verifyToken, isAdmin, deleteCategory);
 
 export default router;

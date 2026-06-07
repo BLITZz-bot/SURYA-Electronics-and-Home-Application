@@ -6,13 +6,17 @@ import {
   updateProduct, 
   deleteProduct 
 } from '../controllers/productController';
+import { verifyToken, isAdmin } from '../middleware/authMiddleware';
 
 const router = Router();
 
+// Public routes
 router.get('/', getProducts);
-router.post('/', createProduct);
 router.get('/:id', getProductById);
-router.put('/:id', updateProduct);
-router.delete('/:id', deleteProduct);
+
+// Admin-only routes
+router.post('/', verifyToken, isAdmin, createProduct);
+router.put('/:id', verifyToken, isAdmin, updateProduct);
+router.delete('/:id', verifyToken, isAdmin, deleteProduct);
 
 export default router;
