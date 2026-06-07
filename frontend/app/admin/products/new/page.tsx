@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { getApiUrl } from "../../../../lib/api-utils";
 
 export default function NewProductPage() {
   const router = useRouter();
@@ -14,7 +15,7 @@ export default function NewProductPage() {
     // Fetch categories
     const fetchCategories = async () => {
       try {
-        const res = await fetch('/api/admin/categories');
+        const res = await fetch(getApiUrl('/api/categories'));
         const data = await res.json();
         setCategories(data);
       } catch (err) {
@@ -41,7 +42,7 @@ export default function NewProductPage() {
         imageUrl: formData.get('imageUrl') || '',
       };
 
-      const res = await fetch('/api/admin/products', {
+      const res = await fetch(getApiUrl('/api/products'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
@@ -120,7 +121,7 @@ export default function NewProductPage() {
                 )}
               </select>
               {categories.length === 0 && (
-                <p className="text-xs text-amber-600 mt-2">⚠ Create categories first in Settings</p>
+                <p className="text-xs text-amber-600 mt-2">⚠ Create categories first in Categories page</p>
               )}
             </div>
             <div>

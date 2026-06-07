@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { getApiUrl } from '../../../lib/api-utils';
 
 export default function SettingsPage() {
   const router = useRouter();
@@ -17,7 +18,7 @@ export default function SettingsPage() {
 
   const fetchSettings = async () => {
     try {
-      const res = await fetch('/api/admin/settings');
+      const res = await fetch(getApiUrl('/api/settings'));
       if (!res.ok) throw new Error('Failed to fetch settings');
       const data = await res.json();
       setSettings(data);
@@ -47,7 +48,7 @@ export default function SettingsPage() {
         currency: formData.get('currency'),
       };
 
-      const res = await fetch('/api/admin/settings', {
+      const res = await fetch(getApiUrl('/api/settings'), {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),

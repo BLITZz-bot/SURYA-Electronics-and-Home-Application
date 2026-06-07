@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { getApiUrl } from '../../../lib/api-utils';
 
 export default function CategoriesPage() {
   const [categories, setCategories] = useState<any[]>([]);
@@ -18,7 +19,7 @@ export default function CategoriesPage() {
 
   const fetchCategories = async () => {
     try {
-      const res = await fetch('/api/admin/categories');
+      const res = await fetch(getApiUrl('/api/categories'));
       const data = await res.json();
       setCategories(data);
     } catch (err) {
@@ -39,7 +40,7 @@ export default function CategoriesPage() {
     };
 
     try {
-      const res = await fetch('/api/admin/categories', {
+      const res = await fetch(getApiUrl('/api/categories'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(categoryData),
@@ -63,7 +64,7 @@ export default function CategoriesPage() {
     if (!confirm('Are you sure you want to delete this category?')) return;
 
     try {
-      const res = await fetch(`/api/admin/categories/${id}`, {
+      const res = await fetch(getApiUrl(`/api/categories/${id}`), {
         method: 'DELETE',
       });
 
