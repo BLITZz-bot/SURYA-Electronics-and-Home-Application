@@ -1,29 +1,32 @@
 "use client";
 
-import { signIn, signOut, useSession } from "next-auth/react";
+import { useAuth } from "../context/auth-context";
+import { useRouter } from "next/navigation";
 
 export default function AuthButton() {
-  const { data: session } = useSession();
+  const { user, loading, logout } = useAuth();
+  const router = useRouter();
 
-  if (!session) {
+  if (loading) return <div className="h-10 w-20 animate-pulse bg-slate-200 rounded-full" />;
+
+  if (!user) {
     return (
       <button
         type="button"
-        onClick={() => signIn("google")}
+        onClick={() => router.push("/auth/signin")}
         className="rounded-full bg-sky-600 px-5 py-3 text-white transition hover:bg-sky-700"
       >
-        Sign in with Google
+        Sign in
       </button>
     );
   }
 
   return (
-    <div className="flex gap-3">
-      <span className="font-medium text-slate-800">Signed in as {session.user?.email}</span>
+    <div className="flex gap-3 items-center">
       <button
         type="button"
-        onClick={() => signOut()}
-        className="rounded-full bg-slate-900 px-4 py-2 text-sm text-white transition hover:bg-slate-700"
+        onClick={() => logout()}
+        className="rounded-full bg-slate-900 px-6 py-3 text-white transition hover:bg-slate-800"
       >
         Sign out
       </button>
