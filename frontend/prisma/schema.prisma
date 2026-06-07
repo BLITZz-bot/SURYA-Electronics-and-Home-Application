@@ -56,13 +56,24 @@ model Product {
   description String
   price       Decimal
   stock       Int         @default(0)
-  category    String
+  categoryId  String
   imageUrl    String
   brand       String
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
+  category    Category    @relation(fields: [categoryId], references: [id], onDelete: Cascade)
   cartItems   CartItem[]
   orderItems  OrderItem[]
+}
+
+model Category {
+  id        String    @id @default(cuid())
+  name      String    @unique
+  slug      String    @unique
+  image     String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  products  Product[]
 }
 
 model CartItem {
@@ -83,7 +94,9 @@ model Order {
   userId             String
   totalAmount        Decimal
   status             String      @default("pending")
+  paymentStatus      String      @default("pending")
   paymentMethod      String      @default("COD")
+  transactionId      String?
   shippingAddress    String
   shippingCity       String
   shippingPostalCode String
