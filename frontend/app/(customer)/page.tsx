@@ -59,21 +59,37 @@ export default function HomePage() {
   return (
     <main className="min-h-screen pb-20 bg-amazon-bg overflow-x-hidden">
       {/* Centered Brand-Focused Hero Section */}
-      <section className="relative h-[60vh] md:h-[70vh] flex items-center justify-center bg-[#0F3D6E] overflow-hidden">
-        {/* Animated Gradient Background */}
-        <div className="absolute inset-0 bg-gradient-to-br from-[#0F3D6E] to-[#5DADE2] opacity-95" />
-        
-        <div className="mx-auto max-w-[1500px] px-6 relative z-20 w-full text-center space-y-8">
-           <div className="space-y-4">
-              <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black text-white leading-none tracking-tighter uppercase italic select-none">
+      <section className="relative h-[60vh] md:h-[70vh] flex items-center justify-center bg-black overflow-hidden">
+        {/* Background Image */}
+        <Image
+          src="https://images.unsplash.com/photo-1513694203232-719a280e022f?q=80&w=2000&auto=format&fit=crop"
+          alt="Modern Home Interior with Lighting and Appliances"
+          fill
+          className="object-cover object-center scale-105 opacity-90"
+          priority
+        />
+        {/* Glassmorphism Overlay */}
+        <div className="absolute inset-0 bg-white/10 backdrop-blur-md border-b border-white/20 bg-gradient-to-br from-black/40 to-transparent" />
+
+        <div className="mx-auto max-w-[1500px] px-6 relative z-20 w-full text-center space-y-8 pb-20 lg:pb-32">
+           <div className="space-y-6 relative py-4">
+              {/* Backlight to make text pop against any background */}
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[150%] bg-black/60 blur-[60px] rounded-[100%] pointer-events-none" />
+
+              <h1 className="relative text-6xl sm:text-7xl md:text-8xl lg:text-9xl font-black leading-none tracking-tighter uppercase italic select-none text-transparent bg-clip-text bg-gradient-to-b from-white via-white to-gray-400 drop-shadow-2xl">
                  SURYA
               </h1>
-              <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-white tracking-tight">
-                 Electronics & Home Appliances
-              </h2>
+              
+              <div className="relative flex items-center justify-center gap-4 sm:gap-6">
+                 <div className="hidden sm:block h-[2px] w-12 sm:w-24 bg-gradient-to-r from-transparent to-orange-500 rounded-full opacity-80" />
+                 <h2 className="text-lg sm:text-2xl md:text-3xl lg:text-4xl font-black text-white tracking-[0.15em] uppercase drop-shadow-xl">
+                    Electronics <span className="text-orange-500">&</span> Home Appliances
+                 </h2>
+                 <div className="hidden sm:block h-[2px] w-12 sm:w-24 bg-gradient-to-l from-transparent to-orange-500 rounded-full opacity-80" />
+              </div>
            </div>
-           
-           <p className="text-sm sm:text-base md:text-lg lg:text-xl text-blue-50/90 leading-relaxed font-medium max-w-3xl mx-auto px-4">
+
+           <p className="relative text-sm sm:text-base md:text-lg lg:text-xl text-white/90 leading-relaxed font-medium max-w-3xl mx-auto px-4 drop-shadow-md z-10">
               Your trusted destination for premium electronics, home appliances, smartphones, laptops, accessories, and technology solutions.
            </p>
 
@@ -88,8 +104,8 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Content Container - No Overlap */}
-      <div className="mx-auto max-w-[1500px] px-8 py-16 relative z-30 space-y-16">
+      {/* Content Container - Overlapping Hero */}
+      <div className="mx-auto max-w-[1500px] px-8 pb-16 relative z-30 space-y-16 -mt-10 lg:-mt-16">
         
         {/* Dynamic Category Row */}
         {activeCategories.length > 0 && (
