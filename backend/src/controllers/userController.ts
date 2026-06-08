@@ -12,12 +12,7 @@ export const getProfile = async (req: Request, res: Response) => {
     const email = firebaseUser.email.toLowerCase().trim();
     const adminEmails = process.env.ADMIN_EMAILS?.split(',').map(e => e.trim().toLowerCase()) ?? [];
     
-    console.log('--- ADMIN CHECK ---');
-    console.log('Login Email:', email);
-    console.log('Admin List:', adminEmails);
-    
-    const shouldBeAdmin = adminEmails.includes(email) || email === 'bharatha9483@gmail.com';
-    console.log('Is Match:', shouldBeAdmin);
+    const shouldBeAdmin = adminEmails.includes(email);
 
     // Find or create user
     let user = await prisma.user.findUnique({
@@ -33,7 +28,6 @@ export const getProfile = async (req: Request, res: Response) => {
           role: shouldBeAdmin ? 'admin' : 'customer',
         },
       });
-      console.log(`Created new user: ${email} with role: ${user.role}`);
     } else {
       // Force promote if email is in the list (Even if they existed before)
       if (shouldBeAdmin && user.role !== 'admin') {
@@ -41,7 +35,6 @@ export const getProfile = async (req: Request, res: Response) => {
           where: { id: user.id },
           data: { role: 'admin' },
         });
-        console.log(`Promoted user to admin: ${email}`);
       }
     }
 
@@ -53,10 +46,7 @@ export const getProfile = async (req: Request, res: Response) => {
     res.json(user);
   } catch (error: any) {
     console.error('Profile fetch error:', error);
-    res.status(500).json({ 
-      error: 'Failed to fetch profile', 
-      details: error.message 
-    });
+    res.status(500).json({ error: 'Failed to fetch profile' });
   }
 };
 
@@ -97,8 +87,11 @@ export const updateUser = async (req: Request, res: Response) => {
     const { role } = req.body;
 
     const user = await prisma.user.findUnique({ where: { id: id as string } });
-    if (user?.email === 'bharatha9483@gmail.com') {
-      return res.status(403).json({ error: 'Primary owner cannot be demoted' });
+    if (user && user.role === 'admin' && req.body.role !== 'admin') {
+      const adminEmails = process.env.ADMIN_EMAILS?.split(',').map(e => e.trim().toLowerCase()) ?? [];
+      if (user.email && adminEmails.includes(user.email.toLowerCase())) {
+        return res.status(403).json({ error: 'Primary owner cannot be demoted' });
+      }
     }
 
     const updatedUser = await prisma.user.update({
@@ -116,8 +109,11 @@ export const deleteUser = async (req: Request, res: Response) => {
     const { id } = req.params;
 
     const user = await prisma.user.findUnique({ where: { id: id as string } });
-    if (user?.email === 'bharatha9483@gmail.com') {
-      return res.status(403).json({ error: 'Primary owner cannot be deleted' });
+    if (user && user.role === 'admin') {
+      const adminEmails = process.env.ADMIN_EMAILS?.split(',').map(e => e.trim().toLowerCase()) ?? [];
+      if (user.email && adminEmails.includes(user.email.toLowerCase())) {
+        return res.status(403).json({ error: 'Primary owner cannot be deleted' });
+      }
     }
 
     await prisma.user.delete({

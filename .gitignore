@@ -7,3 +7,13 @@ frontend/.next/
 
 # Firebase private keys
 backend/firebase-key.json
+
+# Build artifacts
+*.tsbuildinfo
+
+# Debug scripts
+frontend/fix.js
+frontend/update_pages.js
+frontend/update_pages_v2.js
+update_btns.py
+update_swr.py

@@ -31,7 +31,6 @@ export const addToCart = async (req: Request, res: Response) => {
     });
 
     if (!user) {
-      console.log('User not found in cart controller, syncing from firebase user:', firebaseUser.email);
       const adminEmails = process.env.ADMIN_EMAILS?.split(',').map(e => e.trim().toLowerCase()) ?? [];
       const email = (firebaseUser.email as string).toLowerCase();
       user = await prisma.user.create({
@@ -58,7 +57,7 @@ export const addToCart = async (req: Request, res: Response) => {
           productId
         }
       },
-      update: {
+update: {
         quantity: { increment: quantity }
       },
       create: {
@@ -68,11 +67,10 @@ export const addToCart = async (req: Request, res: Response) => {
       }
     });
 
-    console.log(`Success: Added ${quantity} of ${productId} to cart for user ${user.id}`);
     res.json(cartItem);
-  } catch (error: any) {
-    console.error('CRITICAL: Add to cart failed:', error.message);
-    res.status(500).json({ error: 'Internal server error adding to cart', details: error.message });
+  } catch (error) {
+    console.error('Add to cart failed');
+    res.status(500).json({ error: 'Internal server error adding to cart' });
   }
 };
 

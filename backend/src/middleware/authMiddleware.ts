@@ -13,15 +13,12 @@ if (!admin.apps.length) {
       admin.initializeApp({
         credential: admin.credential.cert(keyPath),
       });
-      console.log('Firebase Admin initialized using firebase-key.json');
     } else {
-      // Fallback to Env variable for production (Render)
       const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT || '{}');
       if (serviceAccount.project_id) {
         admin.initializeApp({
           credential: admin.credential.cert(serviceAccount),
         });
-        console.log('Firebase Admin initialized using Environment Variable');
       } else {
         console.error('Firebase Admin Error: No credentials found (JSON or ENV)');
       }
