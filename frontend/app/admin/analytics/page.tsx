@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useState } from "react";
 import { useAuth } from "../../../context/auth-context";
 import { getApiUrl } from "../../../lib/api-utils";
 import Link from "next/link";
@@ -8,11 +8,12 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
   AreaChart, Area, PieChart, Pie, Cell, LineChart, Line, Legend 
 } from "recharts";
-import { 
-  TrendingUp, DollarSign, Users, ShoppingCart, 
-  Package, Calendar, Activity, Loader2,
+import useSWR from "swr";
+import {
+  TrendingUp, DollarSign, Users, ShoppingCart,
+  Package, Calendar, Loader2,
   CheckCircle2, ShoppingBag, BarChart3, PieChart as PieIcon,
-  Layers, History, Boxes
+  Layers, History, Boxes, RefreshCcw
 } from "lucide-react";
 import { cn } from "../../../lib/utils";
 import { motion } from "framer-motion";
@@ -20,28 +21,49 @@ import { motion } from "framer-motion";
 const COLORS = ['#0F3D6E', '#5DADE2', '#F59E0B', '#10B981', '#EF4444', '#8B5CF6'];
 
 export default function AnalyticsPage() {
-  const { token, isAdmin } = useAuth();
-  const [data, setData] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const { token, isAdmin, refreshToken } = useAuth();
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
+  const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
-  const fetchAnalytics = useCallback(async () => {
-    try {
-      const res = await fetch(getApiUrl("/api/settings/stats"), {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (res.ok) setData(await res.json());
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
+  const fetcher = async (url: string) => {
+    const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+    if (!res.ok) throw new Error("Failed to fetch analytics");
+    return res.json();
+  };
+
+  const { data, isLoading, error, mutate } = useSWR(
+    token && isAdmin ? getApiUrl("/api/settings/stats") : null,
+    fetcher,
+    {
+      refreshInterval: 30000,
+      revalidateOnFocus: true,
+      onSuccess: () => setLastUpdated(new Date())
     }
-  }, [token]);
+  );
 
-  useEffect(() => {
-    if (token && isAdmin) fetchAnalytics();
-  }, [token, isAdmin, fetchAnalytics]);
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      const freshToken = await refreshToken();
+      const res = await fetch(getApiUrl("/api/settings/stats"), {
+        headers: { Authorization: `Bearer ${freshToken || token}` }
+      });
+      if (!res.ok) throw new Error("Failed");
+      const fresh = await res.json();
+      await mutate(fresh, false);
+      setLastUpdated(new Date());
+      setNotification({ type: 'success', message: 'Analytics data updated' });
+      setTimeout(() => setNotification(null), 3000);
+    } catch {
+      setNotification({ type: 'error', message: 'Failed to refresh analytics' });
+      setTimeout(() => setNotification(null), 3000);
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center py-40 gap-4">
         <Loader2 className="h-10 w-10 animate-spin text-[#0F3D6E]" />
@@ -70,18 +92,48 @@ export default function AnalyticsPage() {
   }
 
   return (
-    <div className="space-y-12 animate-in fade-in duration-700 pb-20">
+    <div className="space-y-12 animate-in fade-in duration-700 pb-20 relative">
+      {/* Toast */}
+      {notification && (
+        <div
+          className={cn(
+            "fixed bottom-6 right-6 z-50 flex items-center gap-3 px-5 py-3.5 rounded-2xl border shadow-2xl animate-in fade-in slide-in-from-bottom-4 duration-300",
+            notification.type === "success"
+              ? "bg-emerald-50 border-emerald-100 text-emerald-700"
+              : "bg-rose-50 border-rose-100 text-rose-700"
+          )}
+        >
+          <CheckCircle2 size={20} />
+          <div className="flex flex-col">
+            <span className="text-xs font-black uppercase tracking-widest">{notification.type === 'success' ? 'Success' : 'Error'}</span>
+            <span className="text-sm font-bold">{notification.message}</span>
+          </div>
+        </div>
+      )}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div>
           <h1 className="text-4xl font-black text-gray-900 tracking-tight italic">Business Intelligence</h1>
           <p className="text-sm text-gray-500 font-medium mt-1">Real-time performance analysis and growth forecasting</p>
         </div>
-        <div className="flex items-center gap-3 bg-white p-2 rounded-2xl border border-gray-100 shadow-sm">
-           <Calendar size={18} className="text-[#0F3D6E] ml-2" />
-           <span className="text-xs font-black text-[#0F3D6E] uppercase tracking-widest">Last 6 Months</span>
-           <div className="w-1 h-4 bg-gray-100 mx-2" />
-           <button onClick={fetchAnalytics} className="p-2 hover:bg-gray-50 rounded-xl transition-all"><Activity size={16} className="text-gray-400" /></button>
-        </div>
+         <div className="flex items-center gap-3 bg-white p-2 rounded-2xl border border-gray-100 shadow-sm">
+            <Calendar size={18} className="text-[#0F3D6E] ml-2" />
+            <span className="text-xs font-black text-[#0F3D6E] uppercase tracking-widest">Last 6 Months</span>
+            <div className="w-1 h-4 bg-gray-100 mx-2" />
+            <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Updated {lastUpdated.toLocaleTimeString()}</span>
+            <button 
+               onClick={handleRefresh}
+               disabled={isRefreshing}
+               className={cn(
+                 "flex items-center gap-2 px-4 py-2 border rounded-xl font-bold text-xs transition-all",
+                 isRefreshing 
+                   ? "bg-gray-50 border-gray-200 text-gray-400 cursor-wait" 
+                   : "bg-white border-gray-200 text-gray-700 hover:bg-gray-50"
+               )}
+            >
+               <RefreshCcw size={16} className={cn("transition-transform", isRefreshing && "animate-spin")} />
+               {isRefreshing ? "Updating..." : "Refresh"}
+            </button>
+         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">

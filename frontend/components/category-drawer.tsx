@@ -60,6 +60,20 @@ export default function CategoryDrawer({ isOpen, onClose, categories }: Category
            </div>
            
            <nav className="space-y-1">
+              <Link 
+                href={`/products`}
+                onClick={onClose}
+                className="flex items-center justify-between px-6 py-4 hover:bg-gray-50 transition-all border-l-4 border-transparent hover:border-amazon-orange group"
+              >
+                <div className="flex items-center gap-4">
+                   <div className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center text-gray-500 group-hover:bg-[#0F3D6E]/5 group-hover:text-[#0F3D6E] transition-colors">
+                      <LayoutGrid size={20} />
+                   </div>
+                   <span className="text-sm font-bold text-gray-700 group-hover:text-gray-900">All Products</span>
+                </div>
+                <ChevronRight size={16} className="text-gray-300 group-hover:text-amazon-orange transition-all" />
+              </Link>
+
               {categories.map((cat) => {
                 const Icon = iconMap[cat.name] || LayoutGrid;
                 return (

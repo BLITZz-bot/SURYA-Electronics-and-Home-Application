@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useAuth } from "../../context/auth-context";
 import { getApiUrl } from "../../lib/api-utils";
+import useSWR from "swr";
 import { 
   BarChart, 
   Bar, 
@@ -27,7 +28,8 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   RefreshCcw,
-  Plus
+  Plus,
+  CheckCircle2
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
@@ -36,35 +38,30 @@ import { cn } from "../../lib/utils";
 const COLORS = ['#0F3D6E', '#5DADE2', '#F59E0B', '#10B981', '#EF4444', '#8B5CF6'];
 
 export default function AdminDashboard() {
-  const { token, isAdmin } = useAuth();
-  const [stats, setStats] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const { token, isAdmin, refreshToken } = useAuth();
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
 
-  const fetchStats = useCallback(async () => {
-    try {
-      const res = await fetch(getApiUrl("/api/settings/stats"), {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setStats(data);
-      }
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
+  const fetcher = async (url: string) => {
+    const res = await fetch(url, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    if (!res.ok) throw new Error("Failed to fetch stats");
+    return res.json();
+  };
+
+  const { data: stats, isLoading, mutate } = useSWR(
+    token && isAdmin ? getApiUrl("/api/settings/stats") : null,
+    fetcher,
+    {
+      refreshInterval: 30000,
+      revalidateOnFocus: true,
+      onSuccess: () => setLastUpdated(new Date())
     }
-  }, [token]);
+  );
 
-  useEffect(() => {
-    if (token && isAdmin) {
-      fetchStats();
-      const interval = setInterval(fetchStats, 30000); // Refresh every 30s
-      return () => clearInterval(interval);
-    }
-  }, [token, isAdmin, fetchStats]);
-
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center py-40 gap-4">
         <RefreshCcw className="h-10 w-10 animate-spin text-[#0F3D6E]" />
@@ -108,8 +105,68 @@ export default function AdminDashboard() {
     },
   ];
 
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      const freshToken = await refreshToken();
+      const res = await fetch(getApiUrl("/api/settings/stats"), {
+        headers: { Authorization: `Bearer ${freshToken || token}` }
+      });
+      if (!res.ok) throw new Error("Failed");
+      const data = await res.json();
+      await mutate(data, false);
+      setLastUpdated(new Date());
+      setNotification({ type: 'success', message: 'All data updated successfully' });
+      setTimeout(() => setNotification(null), 3000);
+    } catch {
+      setNotification({ type: 'error', message: 'Failed to refresh data' });
+      setTimeout(() => setNotification(null), 3000);
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
   return (
-    <div className="space-y-10 animate-in fade-in duration-700">
+    <div className="space-y-10 animate-in fade-in duration-700 relative">
+      {/* Refresh controls */}
+      <div className="flex justify-between items-center">
+        <span className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em]">
+          Last updated: {lastUpdated.toLocaleTimeString()}
+        </span>
+        <div className="flex items-center gap-3">
+          <button 
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+            className={cn(
+              "flex items-center gap-2 px-4 py-2 border rounded-xl font-bold text-xs transition-all",
+              isRefreshing 
+                ? "bg-gray-50 border-gray-200 text-gray-400 cursor-wait" 
+                : "bg-white border-gray-200 text-gray-700 hover:bg-gray-50"
+            )}
+          >
+            <RefreshCcw size={16} className={cn("transition-transform", isRefreshing && "animate-spin")} />
+            {isRefreshing ? "Updating..." : "Refresh"}
+          </button>
+        </div>
+      </div>
+
+      {/* Toast / Notification */}
+      {notification && (
+        <div
+          className={cn(
+            "fixed bottom-6 right-6 z-50 flex items-center gap-3 px-5 py-3.5 rounded-2xl border shadow-2xl animate-in fade-in slide-in-from-bottom-4 duration-300",
+            notification.type === "success"
+              ? "bg-emerald-50 border-emerald-100 text-emerald-700"
+              : "bg-rose-50 border-rose-100 text-rose-700"
+          )}
+        >
+          <CheckCircle2 size={20} />
+          <div className="flex flex-col">
+            <span className="text-xs font-black uppercase tracking-widest">{notification.type === 'success' ? 'Success' : 'Error'}</span>
+            <span className="text-sm font-bold">{notification.message}</span>
+          </div>
+        </div>
+      )}
       {/* KPI Section */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
         {kpis.map((kpi, i) => (

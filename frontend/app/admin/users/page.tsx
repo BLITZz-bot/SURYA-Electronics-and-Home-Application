@@ -4,42 +4,60 @@ import { useEffect, useState, useCallback } from "react";
 import { getApiUrl } from "../../../lib/api-utils";
 import { useAuth } from "../../../context/auth-context";
 import Image from "next/image";
-import { 
+import { RefreshCcw, 
   Users, 
   Search, 
   Shield, 
   Mail, 
   Lock, 
-  ShoppingBag
+  ShoppingBag,
+  CheckCircle2
 } from "lucide-react";
 import { cn } from "../../../lib/utils";
 
 export default function AdminUsersPage() {
-  const { token, isAdmin } = useAuth();
+  const { token, isAdmin, refreshToken } = useAuth();
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
 
-  const fetchUsers = useCallback(async () => {
+  const fetchUsers = useCallback(async (isManual = false) => {
+    if (isManual) setIsRefreshing(true);
     try {
+      const freshToken = isManual ? await refreshToken() : token;
       const res = await fetch(getApiUrl('/api/users'), {
-        headers: { 'Authorization': `Bearer ${token}` }
+        headers: { 'Authorization': `Bearer ${freshToken || token}` }
       });
       if (res.ok) {
         const data = await res.json();
         setUsers(data);
+        if (isManual) {
+          setNotification({ type: 'success', message: 'Customers updated successfully' });
+          setTimeout(() => setNotification(null), 3000);
+        }
+      } else if (isManual) {
+        setNotification({ type: 'error', message: 'Failed to refresh customers' });
+        setTimeout(() => setNotification(null), 3000);
       }
     } catch (error) {
-      console.error("Failed to fetch admin users:", error);
+      if (isManual) {
+        setNotification({ type: 'error', message: 'Failed to refresh customers' });
+        setTimeout(() => setNotification(null), 3000);
+      }
     } finally {
       setLoading(false);
+      if (isManual) setIsRefreshing(false);
     }
-  }, [token]);
+  }, [token, refreshToken]);
 
   useEffect(() => {
     if (token && isAdmin) {
       fetchUsers();
+      const interval = setInterval(fetchUsers, 30000);
+      return () => clearInterval(interval);
     }
   }, [token, isAdmin, fetchUsers]);
 
@@ -53,11 +71,12 @@ export default function AdminUsersPage() {
     
     setUpdatingId(userId);
     try {
+      const freshToken = await refreshToken();
       const res = await fetch(getApiUrl(`/api/users/${userId}`), {
         method: 'PATCH',
         headers: { 
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}` 
+          'Authorization': `Bearer ${freshToken || token}` 
         },
         body: JSON.stringify({ role: newRole })
       });
@@ -83,12 +102,42 @@ export default function AdminUsersPage() {
 
   if (!isAdmin) return <div className="p-8 text-center font-black text-rose-600 uppercase tracking-tighter">RESTRICTED ACCESS</div>;
 
-  return (
-    <div className="space-y-8 animate-in fade-in duration-500">
+return (
+    <div className="space-y-8 animate-in fade-in duration-500 relative">
+      {/* Toast */}
+      {notification && (
+        <div
+          className={cn(
+            "fixed bottom-6 right-6 z-50 flex items-center gap-3 px-5 py-3.5 rounded-2xl border shadow-2xl animate-in fade-in slide-in-from-bottom-4 duration-300",
+            notification.type === "success"
+              ? "bg-emerald-50 border-emerald-100 text-emerald-700"
+              : "bg-rose-50 border-rose-100 text-rose-700"
+          )}
+        >
+          <CheckCircle2 size={20} />
+          <div className="flex flex-col">
+            <span className="text-xs font-black uppercase tracking-widest">{notification.type === 'success' ? 'Success' : 'Error'}</span>
+            <span className="text-sm font-bold">{notification.message}</span>
+          </div>
+        </div>
+      )}
       <div className="flex items-center justify-between">
-        <div>
+        <div className="flex items-center justify-between">
           <h1 className="text-3xl font-black text-gray-900 tracking-tight">Customer Directory</h1>
           <p className="text-sm text-gray-500 font-medium">Manage user permissions and view customer engagement</p>
+        </div>
+        <div className="flex items-center gap-4">
+          <button 
+            onClick={() => fetchUsers(true)}
+            disabled={isRefreshing}
+            className={cn(
+              "flex items-center gap-2 px-4 py-2 border rounded-xl font-bold text-xs transition-all",
+              isRefreshing ? "bg-gray-50 border-gray-200 text-gray-400 cursor-wait" : "bg-white border-gray-200 text-gray-700 hover:bg-gray-50"
+            )}
+          >
+            <RefreshCcw size={16} className={cn(isRefreshing && "animate-spin")} />
+            {isRefreshing ? "Updating..." : "Refresh"}
+          </button>
         </div>
       </div>
 

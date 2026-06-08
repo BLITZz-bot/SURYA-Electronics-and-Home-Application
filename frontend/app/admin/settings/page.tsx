@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { getApiUrl } from "../../../lib/api-utils";
 import { useAuth } from "../../../context/auth-context";
-import { Loader2, Save, Globe, Shield, Activity, Truck } from "lucide-react";
+import { RefreshCcw, Loader2, Save, Globe, Shield, Activity, Truck } from "lucide-react";
 import { cn } from "../../../lib/utils";
 
 export default function SettingsPage() {
@@ -35,6 +35,8 @@ export default function SettingsPage() {
   useEffect(() => {
     if (token && isAdmin) {
       fetchSettings();
+      const interval = setInterval(fetchSettings, 30000);
+      return () => clearInterval(interval);
     }
   }, [token, isAdmin, fetchSettings]);
 
@@ -96,11 +98,16 @@ export default function SettingsPage() {
 
   if (!isAdmin) return null;
 
-  return (
+return (
     <div className="space-y-10 max-w-7xl animate-in fade-in duration-500">
-      <div>
-        <h1 className="text-3xl font-black text-gray-900 tracking-tight italic uppercase">Store Configuration</h1>
-        <p className="text-sm text-gray-500 font-medium">Calibrate your retail environment and fulfillment logic</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-black text-gray-900 tracking-tight italic uppercase">Store Configuration</h1>
+          <p className="text-sm text-gray-500 font-medium">Calibrate your retail environment and fulfillment logic</p>
+        </div>
+        <button onClick={() => fetchSettings()} className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-xl font-bold text-xs hover:bg-gray-50 transition-colors">
+          <RefreshCcw size={16} /> Refresh
+        </button>
       </div>
 
       {error && (

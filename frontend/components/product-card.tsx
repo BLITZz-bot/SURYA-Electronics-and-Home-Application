@@ -74,10 +74,17 @@ export default function ProductCard({ product }: ProductCardProps) {
           </div>
           
           <div className="flex items-center justify-between pt-2">
-             <span className="text-[10px] font-black text-emerald-600 uppercase tracking-widest flex items-center gap-1">
-                <div className="w-1 h-1 bg-emerald-600 rounded-full animate-pulse" />
-                In Stock
-             </span>
+             {product.stock > 0 ? (
+               <span className="text-[10px] font-black text-emerald-600 uppercase tracking-widest flex items-center gap-1">
+                  <div className="w-1 h-1 bg-emerald-600 rounded-full animate-pulse" />
+                  In Stock
+               </span>
+             ) : (
+               <span className="text-[10px] font-black text-rose-600 uppercase tracking-widest flex items-center gap-1">
+                  <div className="w-1 h-1 bg-rose-600 rounded-full" />
+                  Currently unavailable
+               </span>
+             )}
              <div className="p-2 bg-gray-50 rounded-xl group-hover:bg-[#0F3D6E] group-hover:text-white transition-all">
                 <ArrowRight size={14} />
              </div>

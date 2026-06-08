@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useState } from "react";
+import useSWR from "swr";
 import { getApiUrl } from "../../../lib/api-utils";
 import { useAuth } from "../../../context/auth-context";
 import Link from "next/link";
@@ -9,40 +10,31 @@ import {
   Eye, 
   Download, 
   ShoppingCart,
-  Clock
+  Clock,
+  RefreshCcw
 } from "lucide-react";
 import { cn } from "../../../lib/utils";
 
 export default function AdminOrdersPage() {
   const { token, isAdmin } = useAuth();
-  const [orders, setOrders] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
 
-  const fetchOrders = useCallback(async () => {
-    try {
-      const res = await fetch(getApiUrl('/api/orders'), {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setOrders(data);
-      }
-    } catch (error) {
-      console.error("Failed to fetch admin orders:", error);
-    } finally {
-      setLoading(false);
-    }
-  }, [token]);
+  const fetcher = async (url: string) => {
+    const res = await fetch(url, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    if (!res.ok) throw new Error("Failed to fetch orders");
+    return res.json();
+  };
 
-  useEffect(() => {
-    if (token && isAdmin) {
-      fetchOrders();
-    }
-  }, [token, isAdmin, fetchOrders]);
+  const { data: orders = [], isLoading: loading, mutate } = useSWR(
+    token && isAdmin ? getApiUrl('/api/orders') : null,
+    fetcher,
+    { refreshInterval: 30000, revalidateOnFocus: true }
+  );
 
-  const filteredOrders = orders.filter(order => {
+  const filteredOrders = orders.filter((order: any) => {
     const matchesSearch = 
       order.id.toLowerCase().includes(search.toLowerCase()) || 
       order.user?.name?.toLowerCase().includes(search.toLowerCase()) ||
@@ -69,20 +61,25 @@ export default function AdminOrdersPage() {
           <h1 className="text-3xl font-black text-gray-900 tracking-tight">Order Management</h1>
           <p className="text-sm text-gray-500 font-medium">Monitor and fulfill customer requests across all channels</p>
         </div>
-        <button className="flex items-center gap-2 px-6 py-3 bg-white border border-gray-200 rounded-2xl text-sm font-black text-gray-700 hover:bg-gray-50 shadow-sm transition-all">
-           <Download size={18} />
-           Export CSV
-        </button>
+        <div className="flex items-center gap-4">
+          <button onClick={() => mutate()} className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-xl font-bold text-xs hover:bg-gray-50 transition-colors">
+            <RefreshCcw size={16} /> Refresh
+          </button>
+          <button className="flex items-center gap-2 px-6 py-3 bg-white border border-gray-200 rounded-2xl text-sm font-black text-gray-700 hover:bg-gray-50 shadow-sm transition-all">
+             <Download size={18} />
+             Export CSV
+          </button>
+        </div>
       </div>
 
       {/* Stats Summary */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-         {[
-           { label: "Pending", count: orders.filter(o => o.status === 'pending').length, color: "text-amber-500 bg-amber-50" },
-           { label: "Shipped", count: orders.filter(o => o.status === 'shipped').length, color: "text-blue-500 bg-blue-50" },
-           { label: "Delivered", count: orders.filter(o => o.status === 'delivered').length, color: "text-emerald-500 bg-emerald-50" },
-           { label: "Cancelled", count: orders.filter(o => o.status === 'cancelled').length, color: "text-rose-500 bg-rose-50" },
-         ].map((stat) => (
+{[
+            { label: "Pending", count: orders.filter((o: any) => o.status === 'pending').length, color: "text-amber-500 bg-amber-50" },
+            { label: "Shipped", count: orders.filter((o: any) => o.status === 'shipped').length, color: "text-blue-500 bg-blue-50" },
+            { label: "Delivered", count: orders.filter((o: any) => o.status === 'delivered').length, color: "text-emerald-500 bg-emerald-50" },
+            { label: "Cancelled", count: orders.filter((o: any) => o.status === 'cancelled').length, color: "text-rose-500 bg-rose-50" },
+          ].map((stat) => (
            <div key={stat.label} className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex items-center justify-between">
               <span className="text-sm font-bold text-gray-400 uppercase tracking-widest">{stat.label}</span>
               <span className={cn("text-xl font-black px-4 py-1 rounded-2xl", stat.color)}>{stat.count}</span>
@@ -132,7 +129,7 @@ export default function AdminOrdersPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
-              {filteredOrders.map((order) => (
+              {filteredOrders.map((order: any) => (
                 <tr key={order.id} className="hover:bg-blue-50/30 transition-colors group">
                   <td className="px-8 py-6">
                     <p className="font-black text-gray-900">#ORD-{order.id.slice(-8).toUpperCase()}</p>

@@ -14,6 +14,8 @@ export default function AdminProductsPage() {
   useEffect(() => {
     if (token && isAdmin) {
       fetchProducts();
+      const interval = setInterval(fetchProducts, 30000);
+      return () => clearInterval(interval);
     }
   }, [token, isAdmin]);
 
@@ -43,12 +45,17 @@ export default function AdminProductsPage() {
 
   if (!isAdmin) return null;
 
-  return (
+return (
     <div className="space-y-10 animate-in fade-in duration-500">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-black text-gray-900 tracking-tight italic">Product Catalog</h1>
           <p className="text-sm text-gray-500 font-medium">Manage your retail inventory and pricing strategies</p>
+        </div>
+        <div className="flex items-center gap-4">
+          <button onClick={() => fetchProducts()} className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-xl font-bold text-xs hover:bg-gray-50 transition-colors">
+            <RefreshCcw size={16} /> Refresh
+          </button>
         </div>
       </div>
 

@@ -12,6 +12,7 @@ interface AuthContextType {
   loading: boolean;
   isAdmin: boolean;
   logout: () => Promise<void>;
+  refreshToken: () => Promise<string | null>;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -21,6 +22,7 @@ const AuthContext = createContext<AuthContextType>({
   loading: true,
   isAdmin: false,
   logout: async () => {},
+  refreshToken: async () => null,
 });
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
@@ -71,8 +73,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     await firebaseSignOut(auth);
   };
 
+  const refreshToken = async () => {
+    if (user) {
+      const freshToken = await getIdToken(user, true);
+      setToken(freshToken);
+      return freshToken;
+    }
+    return null;
+  };
+
   return (
-    <AuthContext.Provider value={{ user, dbUser, token, loading, isAdmin, logout }}>
+    <AuthContext.Provider value={{ user, dbUser, token, loading, isAdmin, logout, refreshToken }}>
       {children}
     </AuthContext.Provider>
   );

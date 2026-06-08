@@ -10,22 +10,26 @@ interface ProductsPageProps {
   searchParams: {
     category?: string;
     search?: string;
+    view?: string;
   };
 }
 
 export default function ProductsPage({ searchParams }: ProductsPageProps) {
   const [products, setProducts] = useState<any[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const { category, search } = searchParams;
+  const { category, search, view } = searchParams;
   
   const fetchProducts = useCallback(async () => {
     setLoading(true);
     try {
-      const url = getApiUrl('/api/products');
-      const res = await fetch(url);
+      const [prodRes, catRes] = await Promise.all([
+        fetch(getApiUrl('/api/products')),
+        fetch(getApiUrl('/api/categories'))
+      ]);
       
-      if (res.ok) {
-        let allProducts = await res.json();
+      if (prodRes.ok) {
+        let allProducts = await prodRes.json();
         
         if (category) {
           allProducts = allProducts.filter((p: any) => p.category?.name === category);
@@ -40,6 +44,10 @@ export default function ProductsPage({ searchParams }: ProductsPageProps) {
           );
         }
         setProducts(allProducts);
+      }
+      
+      if (catRes.ok) {
+        setCategories(await catRes.json());
       }
     } catch (error: any) {
       console.error("Products Page Fetch Error:", error.message);
@@ -65,9 +73,8 @@ export default function ProductsPage({ searchParams }: ProductsPageProps) {
       <div className="mx-auto max-w-[1500px] px-4 space-y-6">
         <div className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
           <h1 className="text-3xl font-black text-gray-900 tracking-tight">
-            {search ? `Results for "${search}"` : category ? `${category} Collection` : "Electronics Catalog"}
+            {view === 'categories' ? "Browse Categories" : search ? `Results for "${search}"` : category ? `${category} Collection` : "Electronics Catalog"}
           </h1>
-          <p className="text-sm text-gray-500 font-bold mt-2 uppercase tracking-widest">{products.length} products found in database</p>
         </div>
 
         {products.length === 0 ? (
@@ -86,6 +93,38 @@ export default function ProductsPage({ searchParams }: ProductsPageProps) {
                   <p className="col-span-full text-center text-gray-300 italic font-bold">Please clear filters to see our full catalog.</p>
                </div>
             </div>
+          </div>
+        ) : view === 'categories' ? (
+          <div className="space-y-8 mt-8">
+            {categories.length > 0 ? (
+              categories.map((cat) => {
+                const catProducts = products.filter(p => p.categoryId === cat.id);
+                return (
+                  <section key={cat.id} className="bg-white p-6 shadow-sm border border-gray-100 rounded-3xl">
+                    <div className="flex items-center justify-between mb-6">
+                      <h2 className="text-2xl font-black text-gray-900 flex items-center gap-3 italic uppercase tracking-tighter">
+                        <span className="w-2 h-8 bg-[#0F3D6E] rounded-full shadow-lg shadow-[#0F3D6E]/20"></span>
+                        {cat.name}
+                      </h2>
+                      <Link href={`/products?category=${encodeURIComponent(cat.name)}`} className="text-xs font-black text-[#5DADE2] hover:text-[#0F3D6E] transition-colors uppercase tracking-[0.2em] border-b-2 border-transparent hover:border-[#0F3D6E] pb-1">
+                        View More
+                      </Link>
+                    </div>
+                    {catProducts.length > 0 ? (
+                      <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+                        {catProducts.slice(0, 4).map((product) => (
+                          <ProductCard key={product.id} product={product} />
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-gray-400 italic text-center py-6 font-medium">No products available in this category yet.</p>
+                    )}
+                  </section>
+                );
+              })
+            ) : (
+              <p className="text-gray-400 italic text-center py-10 font-medium">No categories found.</p>
+            )}
           </div>
         ) : (
           <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">

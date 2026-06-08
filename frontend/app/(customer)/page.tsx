@@ -32,19 +32,14 @@ export default function HomePage() {
     }
   }
 
-  // Filter categories to only those that have products
-  const activeCategories = categories.filter(cat => 
-    products.some(prod => prod.categoryId === cat.id)
-  );
-
   const featuredProducts = products.filter(p => p.stock > 5).slice(0, 4);
-  const newArrivals = [...products].sort((a, b) => 
+  const newArrivals = [...products].sort((a, b) =>
     new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
   ).slice(0, 4);
-  
+
   const bestSellers = [...products].sort((a, b) => a.stock - b.stock).slice(0, 4);
-  
-  const recentlyAdded = [...products].sort((a, b) => 
+
+  const recentlyAdded = [...products].sort((a, b) =>
     new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
   ).slice(4, 8);
 
@@ -97,20 +92,20 @@ export default function HomePage() {
               <Link href="/products" className="w-full sm:w-auto bg-[#0F3D6E] hover:bg-black text-white font-black py-4 px-12 rounded-xl shadow-2xl transition-all transform active:scale-95 uppercase tracking-widest text-sm border border-white/10">
                  Explore Products
               </Link>
-              <Link href="/products" className="w-full sm:w-auto bg-white/10 hover:bg-white/20 backdrop-blur-md text-white font-bold py-4 px-12 rounded-xl border border-white/30 transition-all transform active:scale-95 uppercase tracking-widest text-sm">
+              <Link href="/products?view=categories" className="w-full sm:w-auto bg-white/10 hover:bg-white/20 backdrop-blur-md text-white font-bold py-4 px-12 rounded-xl border border-white/30 transition-all transform active:scale-95 uppercase tracking-widest text-sm">
                  Browse Categories
               </Link>
            </div>
         </div>
       </section>
 
-      {/* Content Container - Overlapping Hero */}
+{/* Content Container - Overlapping Hero */}
       <div className="mx-auto max-w-[1500px] px-8 pb-16 relative z-30 space-y-16 -mt-10 lg:-mt-16">
-        
+         
         {/* Dynamic Category Row */}
-        {activeCategories.length > 0 && (
+        {categories.length > 0 && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-            {activeCategories.slice(0, 4).map((cat, i) => (
+            {categories.map((cat, i) => (
               <div key={cat.id} className="bg-white p-8 shadow-2xl rounded-[40px] flex flex-col h-[480px] group border border-gray-100 hover:border-[#0F3D6E]/20 transition-all transform hover:-translate-y-2">
                 <h3 className="text-2xl font-black text-[#0F3D6E] mb-6 italic tracking-tighter uppercase">{cat.name}</h3>
                 <div className="flex-1 overflow-hidden mb-8 bg-gray-50 flex items-center justify-center rounded-[30px] border border-gray-50 shadow-inner group-hover:bg-blue-50 transition-colors duration-500 relative">
